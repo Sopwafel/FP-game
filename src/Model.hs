@@ -2,17 +2,22 @@
 --   which represent the state of the game
 module Model where
 
-data InfoToShow = ShowNothing
-                | ShowANumber Int
-                | ShowAChar   Char
-
-nO_SECS_BETWEEN_CYCLES :: Float
-nO_SECS_BETWEEN_CYCLES = 5
 
 data GameState = GameState {
-                   infoToShow  :: InfoToShow
+                   gameObjects :: GameObjects
                  , elapsedTime :: Float
                  }
 
 initialState :: GameState
 initialState = GameState ShowNothing 0
+
+--Field:: (Pic a) => [a]
+type GameObjects = [a]
+
+class Draw a where
+    Draw :: a ->
+    
+data Player = Player { image :: Picture, location :: Point}
+testPlayer = Player { image = Circle 10f,  location = (10f, 10f)}
+
+beginState = GameState { [testPlayer], 0f}
