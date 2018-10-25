@@ -8,8 +8,8 @@ import Model
 view :: GameState -> IO Picture
 view = return . viewPure
 
+--viewGameState :: GameState -> Picture
+
 viewPure :: GameState -> Picture
-viewPure gstate = case infoToShow gstate of
-  ShowNothing   -> blank
-  ShowANumber n -> color green (text (show n))
-  ShowAChar   c -> color green (text [c])
+viewPure GameState {gameObjects =Player {image = img, location = (a,b)}} = img
+    
