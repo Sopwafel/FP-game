@@ -11,6 +11,8 @@ import Data.List
 
 nO_SECS_BETWEEN_CYCLES =1
 
+stepSize = 3
+
 -- | Handle one iteration of the game
 newStep :: Float -> GameState -> IO GameState
 newStep secs gstate = return gstate
@@ -32,12 +34,12 @@ input e gstate = return (inputKey e gstate)
 -- | Because currently we only move on keyPress and keyUp events, not while the key is being held
 inputKey :: Event -> GameState -> GameState
 inputKey (EventKey key keyState _ _) gstate@GameState{player = p, pressedKeys = list}
-  | key == (SpecialKey KeyUp) && keyState == Up   = gstate {p, newlist}
-  | key == (SpecialKey KeyUp) && keyState == Down = gstate {p, filterlist}
-  | otherwise = gstate
-  where
-    newlist    = list ++ [key]
-    filterlist = filter (/=key) list
+    | keyState == Down   = gstate {pressedKeys = newlist}
+    | keyState == Up = gstate {pressedKeys = filterlist}
+    | otherwise = gstate
+    where
+        newlist    = key : list
+        filterlist = filter ((/=) key) list
     --gstate { infoToShow = ShowAChar c }
 inputKey _ gstate = gstate -- Otherwise keep the same
 
@@ -45,12 +47,12 @@ inputKey _ gstate = gstate -- Otherwise keep the same
 -- | TODO: fix type error. We need to do keyBeingPressed on gstate for all keys in keyList
 -- | but now we get an array with a gstate for every key
 doPressedKeys :: GameState -> GameState
-doPressedKeys gstate@GameState{pressedKeys = keyList} = map (keyBeingPressed gstate) keyList 
+doPressedKeys gstate@GameState{pressedKeys = keyList} = foldr keyBeingPressed gstate keyList 
 
 -- | I was thinking we could map this function over the keyPressed array
 -- | And change the gamestate for each key that's being held
-keyBeingPressed :: GameState -> Key -> GameState
-keyBeingPressed gstate@GameState{player = pl@Player{location = (x,y)}} (SpecialKey KeyUp)    = gstate {player = pl {location = (x,(y+10))}}
-keyBeingPressed gstate@GameState{player = pl@Player{location = (x,y)}} (SpecialKey KeyDown)  = undefined
-keyBeingPressed gstate@GameState{player = pl@Player{location = (x,y)}} (SpecialKey KeyRight) = undefined
-keyBeingPressed gstate@GameState{player = pl@Player{location = (x,y)}} (SpecialKey KeyLeft)  = undefined
+keyBeingPressed :: Key -> GameState -> GameState
+keyBeingPressed (SpecialKey KeyUp) gstate@GameState{player = pl@Player{location = (x,y)}}   = gstate {player = pl {location = (x,(y+stepSize))}}
+keyBeingPressed (SpecialKey KeyDown) gstate@GameState{player = pl@Player{location = (x,y)}} = gstate {player = pl {location = (x,(y-stepSize))}}
+keyBeingPressed (SpecialKey KeyRight) gstate@GameState{player = pl@Player{location = (x,y)}}= gstate {player = pl {location = ((x+stepSize),y)}}
+keyBeingPressed (SpecialKey KeyLeft)  gstate@GameState{player = pl@Player{location = (x,y)}}= gstate {player = pl {location = ((x-stepSize),y)}}

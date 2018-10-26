@@ -13,4 +13,4 @@ main = playIO (InWindow "Counter" (400, 400) (0, 0)) -- Or FullScreen
               beginState       -- Initial state
               view             -- View function
               input            -- Event function
-              newStep             -- Step function
+              step             -- Step function
