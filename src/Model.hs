@@ -8,7 +8,7 @@ import Graphics.Gloss.Interface.IO.Game
 -- | This object contains all gameObjects. Is changed every tick by Controller, and drawn every tick by View
 data GameState = GameState {
                    player :: Player
-                 , pressedKeys :: [Key]
+                 , pressedKeys :: [SpecialKey]
                  }
 
 -- initialState :: GameState

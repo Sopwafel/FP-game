@@ -7,6 +7,7 @@ import Model
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
 import System.Random
+import Data.List
 
 nO_SECS_BETWEEN_CYCLES =1
 
@@ -30,10 +31,13 @@ input e gstate = return (inputKey e gstate)
 -- | TODO: make these functions only add a Key to the pressedKey field
 -- | Because currently we only move on keyPress and keyUp events, not while the key is being held
 inputKey :: Event -> GameState -> GameState
-inputKey (EventKey key keyState _ _) gstate@GameState{player = pl@Player{location = (x,y)}, keyList = keylist}
-  | key == (SpecialKey KeyUp) && keyState == Up = gstate {player = pl {location = (x,(y+10))}, keyList = keylist}   -- And add keyUp to  keyList
-  | key == (SpecialKey KeyUp) && keyState == Down = gstate {keyList = keylist}                                      -- Remove keyUp from keylist
+inputKey (EventKey key keyState _ _) gstate@GameState{player = p, pressedKeys = list}
+  | key == (SpecialKey KeyUp) && keyState == Up   = gstate {p, newlist}
+  | key == (SpecialKey KeyUp) && keyState == Down = gstate {p, filterlist}
   | otherwise = gstate
+  where
+    newlist    = list ++ [key]
+    filterlist = filter (/=key) list
     --gstate { infoToShow = ShowAChar c }
 inputKey _ gstate = gstate -- Otherwise keep the same
 
