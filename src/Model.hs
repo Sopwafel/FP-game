@@ -3,12 +3,12 @@
 module Model where
 
 import Graphics.Gloss
-
+import Graphics.Gloss.Interface.IO.Game
 
 -- | This object contains all gameObjects. Is changed every tick by Controller, and drawn every tick by View
 data GameState = GameState {
                    player :: Player
-                 , elapsedTime :: Float
+                 , pressedKeys :: [Key]
                  }
 
 -- initialState :: GameState
@@ -17,10 +17,11 @@ data GameState = GameState {
 --Field:: (Draw a) => [a]
 type GameObjects = Player
 
+
 -- class Draw a where
     -- Draw :: a ->
     
 data Player = Player { image :: Picture, location :: Point}
 testPlayer = Player { image = Circle 10.0,  location = (0.0, 0.0)}
 
-beginState = GameState { player = testPlayer, elapsedTime = 0.0}
+beginState = GameState { player = testPlayer, pressedKeys = []}
