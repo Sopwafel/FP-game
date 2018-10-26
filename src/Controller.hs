@@ -11,7 +11,7 @@ import Data.List
 
 nO_SECS_BETWEEN_CYCLES =1
 
-stepSize = 3
+stepSize = 5
 
 -- | Handle one iteration of the game
 newStep :: Float -> GameState -> IO GameState
@@ -52,7 +52,8 @@ doPressedKeys gstate@GameState{pressedKeys = keyList} = foldr keyBeingPressed gs
 -- | I was thinking we could map this function over the keyPressed array
 -- | And change the gamestate for each key that's being held
 keyBeingPressed :: Key -> GameState -> GameState
-keyBeingPressed (SpecialKey KeyUp) gstate@GameState{player = pl@Player{location = (x,y)}}   = gstate {player = pl {location = (x,(y+stepSize))}}
-keyBeingPressed (SpecialKey KeyDown) gstate@GameState{player = pl@Player{location = (x,y)}} = gstate {player = pl {location = (x,(y-stepSize))}}
-keyBeingPressed (SpecialKey KeyRight) gstate@GameState{player = pl@Player{location = (x,y)}}= gstate {player = pl {location = ((x+stepSize),y)}}
-keyBeingPressed (SpecialKey KeyLeft)  gstate@GameState{player = pl@Player{location = (x,y)}}= gstate {player = pl {location = ((x-stepSize),y)}}
+keyBeingPressed (SpecialKey KeyUp)    gstate@GameState{player = pl@Player{location = (x,y)}} = gstate {player = pl {location = (x,(y+stepSize))}}
+keyBeingPressed (SpecialKey KeyDown)  gstate@GameState{player = pl@Player{location = (x,y)}} = gstate {player = pl {location = (x,(y-stepSize))}}
+keyBeingPressed (SpecialKey KeyRight) gstate@GameState{player = pl@Player{location = (x,y)}} = gstate {player = pl {location = ((x+stepSize),y)}}
+keyBeingPressed (SpecialKey KeyLeft)  gstate@GameState{player = pl@Player{location = (x,y)}} = gstate {player = pl {location = ((x-stepSize),y)}}
+keyBeingPressed _ gstate = gstate 
