@@ -11,5 +11,5 @@ view = return . viewPure
 --viewGameState :: GameState -> Picture
 
 viewPure :: GameState -> Picture
-viewPure GameState {gameObjects =Player {image = img, location = (a,b)}} = img
+viewPure GameState {player =Player {image = img, location = (x,y)}} = translate x y img
     

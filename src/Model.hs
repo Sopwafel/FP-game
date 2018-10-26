@@ -4,8 +4,10 @@ module Model where
 
 import Graphics.Gloss
 
+
+-- | This object contains all gameObjects. Is changed every tick by Controller, and drawn every tick by View
 data GameState = GameState {
-                   gameObjects :: GameObjects
+                   player :: Player
                  , elapsedTime :: Float
                  }
 
@@ -19,6 +21,6 @@ type GameObjects = Player
     -- Draw :: a ->
     
 data Player = Player { image :: Picture, location :: Point}
-testPlayer = Player { image = Circle 10.0,  location = (10.0, 10.0)}
+testPlayer = Player { image = Circle 10.0,  location = (0.0, 0.0)}
 
-beginState = GameState { gameObjects = testPlayer, elapsedTime = 0.0}
+beginState = GameState { player = testPlayer, elapsedTime = 0.0}
