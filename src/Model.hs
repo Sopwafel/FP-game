@@ -2,17 +2,25 @@
 --   which represent the state of the game
 module Model where
 
-data InfoToShow = ShowNothing
-                | ShowANumber Int
-                | ShowAChar   Char
+import Graphics.Gloss
 
-nO_SECS_BETWEEN_CYCLES :: Float
-nO_SECS_BETWEEN_CYCLES = 5
 
+-- | This object contains all gameObjects. Is changed every tick by Controller, and drawn every tick by View
 data GameState = GameState {
-                   infoToShow  :: InfoToShow
+                   player :: Player
                  , elapsedTime :: Float
                  }
 
-initialState :: GameState
-initialState = GameState ShowNothing 0
+-- initialState :: GameState
+-- initialState = GameState ShowNothing 0
+
+--Field:: (Draw a) => [a]
+type GameObjects = Player
+
+-- class Draw a where
+    -- Draw :: a ->
+    
+data Player = Player { image :: Picture, location :: Point}
+testPlayer = Player { image = Circle 10.0,  location = (0.0, 0.0)}
+
+beginState = GameState { player = testPlayer, elapsedTime = 0.0}
