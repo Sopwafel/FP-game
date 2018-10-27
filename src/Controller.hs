@@ -42,8 +42,8 @@ input e gstate = return (inputKey e gstate)
 inputKey :: Event -> GameState -> GameState
 inputKey (EventKey key keyState _ _) gstate@GameState{player = p, pressedKeys = list}
     | keyState == Down   = gstate {pressedKeys = newlist}
-    | keyState == Up = gstate {pressedKeys = filterlist}
-    | otherwise = gstate
+    | keyState == Up     = gstate {pressedKeys = filterlist}
+    | otherwise          = gstate
     where
         newlist    = key : list
         filterlist = filter ((/=) key) list
