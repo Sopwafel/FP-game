@@ -18,17 +18,17 @@ data GameState = GameState {
 
 
 -- | This works because of the DuplicateRecordFields extension
-data Bullet = Bullet {location :: Point, damage :: Int, image :: Picture, speed :: Int}
+data Bullet = Bullet {location :: Point, damage :: Int, image :: Picture, speed :: Float}
 
-testBullet = Bullet {damage = 1, image = Circle 1.0, speed = 5}
+testBullet = Bullet {damage = 1, image = Circle 1.0, speed = 5.0}
 
-data Enemy  = Enemy  {location :: Point, health :: Int, image :: Picture, speed :: Int, bullet :: Bullet} 
+data Enemy  = Enemy  {location :: Point, health :: Int, image :: Picture, speed :: Float, bullet :: Bullet} 
 
 
 -- class Draw a where
     -- Draw :: a ->
     
-data Player = Player { image :: Picture, location :: Point}
-testPlayer = Player { image = Circle 10.0,  location = (0.0, 0.0)}
+data Player = Player { image :: Picture, location :: Point, bullet :: Bullet, shotCooldown :: Int}
+testPlayer = Player { image = Circle 10.0,  location = (0.0, 0.0), bullet = testBullet, shotCooldown = 10}
 
 beginState = GameState { player = testPlayer, pressedKeys = [], enemies = [], friendlyBullets = [], enemyBullets = []}

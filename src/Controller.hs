@@ -20,13 +20,18 @@ newStep :: Float -> GameState -> IO GameState
 newStep secs gstate = return gstate
 
 step :: Float -> GameState -> IO GameState
-step secs gstate = return (doPressedKeys gstate)
+step secs gstate = return (movePlayerBullets (doPressedKeys gstate))
   -- | elapsedTime gstate + secs > nO_SECS_BETWEEN_CYCLES
   -- = return gstate
   -- | otherwise
   -- = -- Just update the elapsed time
     -- return $ gstate --{ elapsedTime = elapsedTime gstate + secs }
-
+movePlayerBullets :: GameState -> GameState
+movePlayerBullets gstate@GameState{friendlyBullets = pBullets} = gstate {friendlyBullets = (map moveABullet pBullets)}
+    
+moveABullet :: Bullet -> Bullet
+moveABullet bullet@Bullet{location = (x,y), speed = v} = bullet {location = (x+v, y)} :: Bullet
+    
 -- | Handle user input
 input :: Event -> GameState -> IO GameState
 input e gstate = return (inputKey e gstate)
@@ -46,18 +51,23 @@ inputKey (EventKey key keyState _ _) gstate@GameState{player = p, pressedKeys = 
 inputKey _ gstate = gstate -- Otherwise keep the same
 
 
--- | TODO: fix type error. We need to do keyBeingPressed on gstate for all keys in keyList
--- | but now we get an array with a gstate for every key
+-- | Acts out all keys that are currently pressed
 doPressedKeys :: GameState -> GameState
 doPressedKeys gstate@GameState{pressedKeys = keyList} = foldr keyBeingPressed gstate keyList 
 
 -- | I was thinking we could map this function over the keyPressed array
 -- | And change the gamestate for each key that's being held
 keyBeingPressed :: Key -> GameState -> GameState
-keyBeingPressed key gstate@GameState{player = pl@Player{location = (x,y)}}
+keyBeingPressed key gstate@GameState{player = pl@Player{location = (x,y), bullet = pBullet}, friendlyBullets = friendBullets}
     | key == (SpecialKey KeyUp)    = gstate {player = pl {location = (x,(y+stepSize))}}
     | key == (SpecialKey KeyDown)  = gstate {player = pl {location = (x,(y-stepSize))}}
     | key == (SpecialKey KeyRight) = gstate {player = pl {location = ((x+stepSize),y)}}
     | key == (SpecialKey KeyLeft)  = gstate {player = pl {location = ((x-stepSize),y)}}
+    | key == (Char 'a')          = addPlayerBullet gstate
     | otherwise = gstate
-    
+
+addPlayerBullet :: GameState -> GameState
+addPlayerBullet gstate@GameState{player = pl@Player{location = (x,y), bullet = pBullet}, friendlyBullets = friendBullets} = 
+    gstate {friendlyBullets = (newBullet : friendBullets)}
+    where
+        newBullet = pBullet {location = (x,y)} :: Bullet
