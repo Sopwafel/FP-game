@@ -40,6 +40,7 @@ data ObjectPath = StraightPath Float       -- Float is speed
 
 data Player = Player { image :: Picture, location :: Point, bullet :: Bullet, shotCooldown :: Int}
 
+data Explosion = Explosion {location :: Point, size :: Int}
     
 -- || Wave logic ######################################################################################################## | --
 
@@ -62,9 +63,9 @@ waveNeedsSpawn Wave{interval = interval, stepCounter = stepCounter} = interval =
 -- || Objects ########################################################################################################### | --
 -- | These are actual objects with values filled in | --
 spawnPattern1 = SpawnPattern [-0.5, 0.0, 0.5]
-testEnemy     = Enemy {image = ThickCircle 5.0 5.0, path = StraightPath (-3.0), bullet = testBullet {path = StraightPath (-5.0)}, shotCooldown = 5, shotCooldownCounter = 0}
+testEnemy     = Enemy {image = color red (ThickCircle 5.0 5.0), path = StraightPath (-3.0), bullet = testBullet {path = StraightPath (-5.0)}, shotCooldown = 30, shotCooldownCounter = 0}
 testBullet    = Bullet {damage = 1, image = Circle 1.0, path = StraightPath 5.0}
-testPlayer    = Player { image = Circle 10.0,  location = (0.0, 0.0), bullet = testBullet, shotCooldown = 10}
+testPlayer    = Player { image = color blue (ThickCircle 5.0 10.0),  location = (0.0, 0.0), bullet = testBullet, shotCooldown = 10}
 testWave      = Wave {pattern = spawnPattern1, enemies = [testEnemy], interval = 30, enemyCounter = 1, stepCounter = 0, totalEnemies = 5}
 beginState    = GameState { player = testPlayer, pressedKeys = [], enemies = [], friendlyBullets = [], enemyBullets = [], waves = []}
 

@@ -72,7 +72,7 @@ updateAnEnemy :: Enemy -> Enemy
 updateAnEnemy enemy@Enemy{location   = (x,y), path = StraightPath v, shotCooldownCounter = shotCooldownCounter, shotCooldown = shotCooldown}
     | shotCooldownCounter < shotCooldown = enemy  {location = (x+v, y), shotCooldownCounter = shotCooldownCounter +1} :: Enemy
     | otherwise = enemy  {location = (x+v, y), shotCooldownCounter = 0} :: Enemy
-
+	
 -- || User input ######################################################################################################## | --
     
 -- | Handle user input
