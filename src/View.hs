@@ -22,11 +22,12 @@ viewPure GameState {player =Player {image = img, location = (x,y)}, friendlyBull
             -- Player picture         Bullets
             
             
--- | puts all images from the bullets in a list of pictures
+-- | Puts all images from the bullets in a list of pictures
 drawBullets :: [Bullet] -> [Picture]
 drawBullets [] = []
 drawBullets ((Bullet {image = img, location = (x,y)}):xs) =  (translate x y img) : (drawBullets xs)
 
+-- | Puts all images from the enemies in a list of pictures
 drawEnemies :: [Enemy] -> [Picture]
 drawEnemies [] = []
 drawEnemies ((Enemy{image = img, location = (x,y)}):xs) = (translate x y img) : (drawEnemies xs)
