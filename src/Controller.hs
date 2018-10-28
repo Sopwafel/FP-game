@@ -22,14 +22,17 @@ newStep secs gstate = return gstate
 
 -- | Updates the gamestate
 step :: Float -> GameState -> IO GameState
-step secs gstate = return (moveEnemies (movePlayerBullets (doPressedKeys (handleWaves gstate))))
+step secs gstate = return (moveEnemyBullets (updateEnemies (movePlayerBullets (doPressedKeys (handleWaves gstate)))))
 
 -- || Update gamestate fields ########################################################################################### | --
 movePlayerBullets :: GameState -> GameState
 movePlayerBullets gstate@GameState{friendlyBullets = pBullets} = gstate {friendlyBullets = (map moveABullet pBullets)}
 
-moveEnemies :: GameState -> GameState
-moveEnemies gstate@GameState{enemies = enemies} = gstate {enemies = (map moveAnEnemy enemies)}
+moveEnemyBullets :: GameState -> GameState
+moveEnemyBullets gstate@GameState{enemyBullets = enemyBullets} = gstate {enemyBullets = (map moveABullet enemyBullets)}
+
+updateEnemies :: GameState -> GameState
+updateEnemies gstate@GameState{enemies = enemies, enemyBullets = enemyBullets} = gstate {enemies = (map updateAnEnemy enemies), enemyBullets = (spawnBullets enemies enemyBullets)}
 
 handleWaves :: GameState -> GameState
 handleWaves gstate@GameState{enemies = enemies, waves = waves} = gstate {waves = newWaves, enemies = (spawnEnemies newWaves enemies)}
@@ -44,18 +47,25 @@ updateAWave wave@Wave{stepCounter = stepCounter, interval = interval, totalEnemi
     | interval == stepCounter = Just wave {stepCounter = 0, enemyCounter = enemyCounter +1}
     | otherwise = Just wave {stepCounter = stepCounter + 1}
     
-    
 spawnEnemies :: [Wave] -> [Enemy] -> [Enemy]
 spawnEnemies [] enemies = enemies
 spawnEnemies (x:xs) enemies
     | waveNeedsSpawn x = spawnEnemies xs ((nextEnemy x) : enemies)
     | otherwise        = spawnEnemies xs enemies
 
+spawnBullets :: [Enemy] -> [Bullet] -> [Bullet]
+spawnBullets [] bullets = bullets
+spawnBullets (x:xs) bullets
+    | enemyCanShoot x = spawnBullets xs ((enemyShoots x) : bullets)
+    | otherwise       = spawnBullets xs bullets
+    
 moveABullet :: Bullet -> Bullet
 moveABullet bullet@Bullet{location = (x,y), path = StraightPath v} = bullet {location = (x+v, y)} :: Bullet
 
-moveAnEnemy :: Enemy -> Enemy
-moveAnEnemy enemy@Enemy{location = (x,y),  path = StraightPath v}  = enemy {location = (x+v, y)} :: Enemy
+updateAnEnemy :: Enemy -> Enemy
+updateAnEnemy enemy@Enemy{location   = (x,y), path = StraightPath v, shotCooldownCounter = shotCooldownCounter, shotCooldown = shotCooldown}
+    | shotCooldownCounter < shotCooldown = enemy  {location = (x+v, y), shotCooldownCounter = shotCooldownCounter +1} :: Enemy
+    | otherwise = enemy  {location = (x+v, y), shotCooldownCounter = 0} :: Enemy
 
 -- || User input ######################################################################################################## | --
     
