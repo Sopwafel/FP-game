@@ -11,12 +11,13 @@ import Graphics.Gloss.Interface.IO.Game
 
 -- | This object contains all gameObjects. Is changed every tick by Controller, and drawn every tick by View
 data GameState = GameState {
-                   player :: Player
-                 , pressedKeys :: [Key]         -- All keys that are currently pressed down.
-                 , enemies :: [Enemy]           -- All enemies. TODO: Move every step, check for collission with player, make shoot
-                 , friendlyBullets :: [Bullet]  -- All friendly bullets. Get moved every step. TODO: Check for collission with enemies
-                 , enemyBullets :: [Bullet]     -- All enemy bullets. Get moved every step. TODO: check collission with player
-                 , waves :: [Wave]              -- Every step, all waves are evaluated and updated. If necessary, an enemy is spawned from them.
+                   player          :: Player
+                 , pressedKeys     :: [Key]       -- All keys that are currently pressed down.
+                 , enemies         :: [Enemy]     -- All enemies. TODO: Move every step, check for collission with player, make shoot
+                 , friendlyBullets :: [Bullet]    -- All friendly bullets. Get moved every step. TODO: Check for collission with enemies
+                 , enemyBullets    :: [Bullet]    -- All enemy bullets. Get moved every step. TODO: check collission with player
+                 , waves           :: [Wave]      -- Every step, all waves are evaluated and updated. If necessary, an enemy is spawned from them.
+				 , explosion       :: [Explosion] -- All EXPLOSIONS currently in the game.
                  }
 
 -- | Pictures!
@@ -40,7 +41,7 @@ data ObjectPath = StraightPath Float       -- Float is speed
 
 data Player = Player { image :: Picture, location :: Point, bullet :: Bullet, shotCooldown :: Int}
 
-data Explosion = Explosion {location :: Point, size :: Int}
+data Explosion = Explosion {location :: Point, scale :: Float, countdown :: Int, velocity :: Int}
     
 -- || Wave logic ######################################################################################################## | --
 
