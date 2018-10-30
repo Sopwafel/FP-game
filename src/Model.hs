@@ -17,7 +17,7 @@ data GameState = GameState {
                  , friendlyBullets :: [Bullet]    -- All friendly bullets. Get moved every step. TODO: Check for collission with enemies
                  , enemyBullets    :: [Bullet]    -- All enemy bullets. Get moved every step. TODO: check collission with player
                  , waves           :: [Wave]      -- Every step, all waves are evaluated and updated. If necessary, an enemy is spawned from them.
-				 , explosion       :: [Explosion] -- All EXPLOSIONS currently in the game.
+				 , explosions      :: [Explosion] -- All EXPLOSIONS currently in the game.
                  }
 
 -- | Pictures!
@@ -41,7 +41,7 @@ data ObjectPath = StraightPath Float       -- Float is speed
 
 data Player = Player { image :: Picture, location :: Point, bullet :: Bullet, shotCooldown :: Int}
 
-data Explosion = Explosion {location :: Point, scale :: Float, countdown :: Int, velocity :: Int}
+data Explosion = Explosion {location :: Point, scale :: Float, countdown :: Int, velocity :: Point}
     
 -- || Wave logic ######################################################################################################## | --
 
