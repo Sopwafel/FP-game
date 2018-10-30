@@ -13,6 +13,7 @@ view = return . viewPure
 --viewGameState :: GameState -> Picture
 
 
+
 -- | Once we get more gameObjects, we use a Pictures object, like this:
 -- | Pictures[picture1, picture2, picture3]
 -- | This itself is a Picture, so we can return it from viewPure
@@ -31,3 +32,7 @@ drawBullets ((Bullet {image = img, location = (x,y)}):xs) =  (translate x y img)
 drawEnemies :: [Enemy] -> [Picture]
 drawEnemies [] = []
 drawEnemies ((Enemy{image = img, location = (x,y)}):xs) = (translate x y img) : (drawEnemies xs)
+
+drawThings :: (Draw a) => [a] -> [Picture]
+drawThings [] = []
+drawThings (thing:xs) = (draw thing) : (drawThings xs)

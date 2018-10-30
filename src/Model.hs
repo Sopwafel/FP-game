@@ -22,12 +22,22 @@ data GameState = GameState {
 -- | Pictures!
 square = Polygon [(-2,-2),(2,-2),(2,2),(-2,2),(-2,-2)]
 
+-- || Type Classes ###################################################################################################### | --
+class Draw d where
+    draw    :: d -> Picture
+
+
 -- || Game Data Types ################################################################################################### | --
 
 -- | This works because of the DuplicateRecordFields extension
 data Bullet = Bullet {location :: Point, damage :: Int, image :: Picture, path :: ObjectPath}
+instance Draw Bullet where
+    draw Bullet {image = img, location = (x,y)} = (translate x y img)
 
 data Enemy  = Enemy {location :: Point, health :: Int, image :: Picture, path :: ObjectPath, bullet :: Bullet, shotCooldown :: Int, shotCooldownCounter :: Int } 
+instance Draw Enemy where
+    draw Enemy {image = img, location = (x,y)} = (translate x y img)
+
 enemyCanShoot :: Enemy -> Bool
 enemyCanShoot Enemy{shotCooldown = shotCooldown, shotCooldownCounter = shotCooldownCounter} = shotCooldown == shotCooldownCounter
 enemyShoots :: Enemy -> Bullet
