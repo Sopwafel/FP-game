@@ -26,29 +26,29 @@ step secs gstate = return (moveEnemyBullets (updateEnemies (movePlayerBullets (d
 
 -- || Update gamestate fields ########################################################################################### | --
 movePlayerBullets :: GameState -> GameState
-movePlayerBullets gstate@GameState{friendlyBullets = pBullets} = gstate {friendlyBullets = (map moveABullet pBullets)}
+movePlayerBullets gstate@GameState{friendlyBullets = pBullets} = gstate {friendlyBullets = (map update pBullets)}
 
 moveEnemyBullets :: GameState -> GameState
-moveEnemyBullets gstate@GameState{enemyBullets = enemyBullets} = gstate {enemyBullets = (map moveABullet enemyBullets)}
+moveEnemyBullets gstate@GameState{enemyBullets = enemyBullets} = gstate {enemyBullets = (map update enemyBullets)}
 
--- | Moves enemies, updates their shot cooldown and spawns bullets if necessary
+ -- | Moves enemies, updates their shot cooldown and spawns bullets if necessary
 updateEnemies :: GameState -> GameState
-updateEnemies gstate@GameState{enemies = enemies, enemyBullets = enemyBullets} = gstate {enemies = (map updateAnEnemy enemies), enemyBullets = (spawnBullets enemies enemyBullets)}
+updateEnemies gstate@GameState{enemies = enemies, enemyBullets = enemyBullets} = gstate {enemies = (map update enemies), enemyBullets = (spawnBullets enemies enemyBullets)}
 
--- | Updates spawn cooldown for waves and spawns enemies if necessary
+ -- | Updates spawn cooldown for waves and spawns enemies if necessary
 handleWaves :: GameState -> GameState
 handleWaves gstate@GameState{enemies = enemies, waves = waves} = gstate {waves = newWaves, enemies = (spawnEnemies newWaves enemies)}
     where
         newWaves = (mapMaybe updateAWave waves)
 
--- | Puts all enemies that should be spawned by [Wave] this step in [Enemy]
+ -- | Puts all enemies that should be spawned by [Wave] this step in [Enemy]
 spawnEnemies :: [Wave] -> [Enemy] -> [Enemy]
 spawnEnemies [] enemies = enemies
 spawnEnemies (x:xs) enemies
     | waveNeedsSpawn x = spawnEnemies xs ((nextEnemy x) : enemies)
     | otherwise        = spawnEnemies xs enemies
 
--- | Puts all bullets that should be spawned by [Enemy] this step in [Bullet]
+ -- | Puts all bullets that should be spawned by [Enemy] this step in [Bullet]
 spawnBullets :: [Enemy] -> [Bullet] -> [Bullet]
 spawnBullets [] bullets = bullets
 spawnBullets (x:xs) bullets
@@ -62,16 +62,6 @@ updateAWave wave@Wave{stepCounter = stepCounter, interval = interval, totalEnemi
     | totalEnemies == enemyCounter = Nothing
     | interval == stepCounter = Just wave {stepCounter = 0, enemyCounter = enemyCounter +1}
     | otherwise = Just wave {stepCounter = stepCounter + 1}
-    
--- | Moves a bullet according to its path
-moveABullet :: Bullet -> Bullet
-moveABullet bullet@Bullet{location = (x,y), path = StraightPath v} = bullet {location = (x+v, y)} :: Bullet
-
--- | Updates an enemies shot cooldown and location
-updateAnEnemy :: Enemy -> Enemy
-updateAnEnemy enemy@Enemy{location   = (x,y), path = StraightPath v, shotCooldownCounter = shotCooldownCounter, shotCooldown = shotCooldown}
-    | shotCooldownCounter < shotCooldown = enemy  {location = (x+v, y), shotCooldownCounter = shotCooldownCounter +1} :: Enemy
-    | otherwise = enemy  {location = (x+v, y), shotCooldownCounter = 0} :: Enemy
 	
 -- || User input ######################################################################################################## | --
     

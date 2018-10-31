@@ -23,24 +23,62 @@ data GameState = GameState {
 square = Polygon [(-2,-2),(2,-2),(2,2),(-2,2),(-2,-2)]
 
 -- || Type Classes ###################################################################################################### | --
+-- | Returns a picture of a drawable object
 class Draw d where
-    draw    :: d -> Picture
+    draw            :: d -> Picture
+-- | Updates an object for 1 step
+class Update a where
+    update          :: a -> a
     
-class Move a where
-    move    :: a -> a
+class Loc a where
+    loc             :: a -> Point
+class Size a where
+    size            :: a -> Int
 
+collides :: (Loc a, Loc b, Size a, Size b) => a -> b -> Bool
+collides a b = collideHelper (loc a) (loc b) (round((size a)/2)) (round((size b)/2))
+
+collideHelper :: Point -> Point -> Int -> Int -> Bool
+collideHelper (x,y) (x2,y2) s1 s2 = x < (x2+s2) && (x+s1) > x2 && y < (y2+s2) && (y+s1) > y2
+-- | Top left and bottom right points of the square hitbox
+-- class Hitbox a where
+    -- hitbox    :: a -> (Point, Point)
+    
+-- collides :: (Hitbox a) => a -> a -> Bool
+-- collides a b = 
+
+-- collideHelper :: (Point, Point) -> (Point, Point) ->
+-- collideHelper ((x1,y1) (x2,y2)) ((a1,b1) (a2,b2))
 
 -- || Game Data Types ################################################################################################### | --
 
 -- | This works because of the DuplicateRecordFields extension
-data Bullet = Bullet {location :: Point, damage :: Int, image :: Picture, path :: ObjectPath}
+data Bullet = Bullet {location :: Point, damage :: Int, image :: Picture, path :: ObjectPath, size :: Int}
 instance Draw Bullet where
     draw Bullet {image = img, location = (x,y)} = (translate x y img)
+instance Update Bullet where
+    update bullet@Bullet{location = (x,y), path = StraightPath v} = bullet {location = (x+v, y)} :: Bullet
 
+-- | These classes are necessary for collision detection
+instance Loc Bullet where
+    loc Bullet{location = a} = a
+instance Size Bullet where
+    size Bullet{size = a} = a
+
+
+    
 data Enemy  = Enemy {location :: Point, health :: Int, image :: Picture, path :: ObjectPath, bullet :: Bullet, shotCooldown :: Int, shotCooldownCounter :: Int } 
 instance Draw Enemy where
     draw Enemy {image = img, location = (x,y)} = (translate x y img)
-
+instance Update Enemy where
+    update enemy@Enemy{location   = (x,y), path = StraightPath v, shotCooldownCounter = shotCooldownCounter, shotCooldown = shotCooldown}
+        | shotCooldownCounter < shotCooldown = enemy  {location = (x+v, y), shotCooldownCounter = shotCooldownCounter +1} :: Enemy
+        | otherwise = enemy  {location = (x+v, y), shotCooldownCounter = 0} :: Enemy
+instance Loc Bullet where
+    loc Enemy{location = a} = a
+instance Size Bullet where
+    size Enemy{size = a} = a
+        
 enemyCanShoot :: Enemy -> Bool
 enemyCanShoot Enemy{shotCooldown = shotCooldown, shotCooldownCounter = shotCooldownCounter} = shotCooldown == shotCooldownCounter
 enemyShoots :: Enemy -> Bullet
@@ -52,8 +90,12 @@ data ObjectPath = StraightPath Float       -- Float is speed
     | HomingPath   Float Float Float       -- First Float is speed, second has range -1..1 and is the direction, third has range 0..1 and is turning rate
 
 data Player = Player { image :: Picture, location :: Point, bullet :: Bullet, shotCooldown :: Int}
+instance Loc Player where
+    loc Player{location = a} = a
+instance Size Player where
+    size Player{size = a} = a
 
-data Explosion = Explosion {location :: Point, size :: Int}
+-- data Explosion = Explosion {location :: Point, size :: Int}
     
 -- || Wave logic ######################################################################################################## | --
 
