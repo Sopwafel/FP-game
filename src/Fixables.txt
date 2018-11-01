@@ -1,0 +1,22 @@
+Things to add
+- Paths
+- Player health
+- PowerUps
+- Score
+- Levels
+- Instances of
+	- Enemies
+	- Waves
+	- Levels
+	- PowerUps
+	- Bullets
+- Visuals
+	- Player model
+	- Enemy models
+	- Powerup models
+
+
+Things to fix
+- Player can go out of screen
+- Caps lock breaks input
+- Make screen size not hardcoded

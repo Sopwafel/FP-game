@@ -28,7 +28,7 @@ updateFields :: GameState -> GameState
 updateFields gstate = updateEXPLOSIONS (updateEnemyBullets (updateEnemies (updatePlayerBullets (updateWaves gstate))))
 
 -- || Collision checks ################################################################################################## | --
--- |
+-- | Checks enemy collision with player bullets and player collision with enemy bullets
 checkCollisions :: GameState -> GameState
 checkCollisions gstate = enemyCollision (playerCollision gstate)
 
