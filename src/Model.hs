@@ -45,6 +45,11 @@ instance Update Explosion where
     update boom@Explosion{countdown = count, location = (x, y), velocity = (x2, y2)}
         | count > 0 = Just boom {countdown = count - 1, location = ((x + x2), (y + y2))}
         | otherwise = Nothing
+instance Update Wave where
+    update wave@Wave{stepCounter = stepCounter, interval = interval, totalEnemies = totalEnemies, enemyCounter = enemyCounter}
+        | totalEnemies == enemyCounter = Nothing
+        | interval == stepCounter = Just wave {stepCounter = 0, enemyCounter = enemyCounter +1}
+        | otherwise = Just wave {stepCounter = stepCounter + 1}
 
 -- | An object that can collide with another object
 class Collideable a where

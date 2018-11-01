@@ -22,7 +22,10 @@ newStep secs gstate = return gstate
 
 -- | Updates the gamestate
 step :: Float -> GameState -> IO GameState
-step secs gstate = return (updateEXPLOSIONS (checkCollisions (moveEnemyBullets (updateEnemies (movePlayerBullets (doPressedKeys (handleWaves gstate)))))))
+step secs gstate = return (checkCollisions (updateFields (doPressedKeys gstate)))
+
+updateFields :: GameState -> GameState
+updateFields gstate = updateEXPLOSIONS (updateEnemyBullets (updateEnemies (updatePlayerBullets (updateWaves gstate))))
 
 -- || Collision checks ################################################################################################## | --
 -- |
@@ -44,15 +47,26 @@ collideBulletsWithObject (x:xs) a
     | otherwise = collideBulletsWithObject xs a
 
 -- || Update gamestate fields ########################################################################################### | --
-movePlayerBullets :: GameState -> GameState
-movePlayerBullets gstate@GameState{friendlyBullets = pBullets} = gstate {friendlyBullets = (mapMaybe update pBullets)}
 
-moveEnemyBullets :: GameState -> GameState
-moveEnemyBullets gstate@GameState{enemyBullets = enemyBullets} = gstate {enemyBullets = (mapMaybe update enemyBullets)}
+updatePlayerBullets :: GameState -> GameState
+updatePlayerBullets gstate@GameState{friendlyBullets = pBullets} = gstate {friendlyBullets = (mapMaybe update pBullets)}
+
+updateEnemyBullets :: GameState -> GameState
+updateEnemyBullets gstate@GameState{enemyBullets = enemyBullets} = gstate {enemyBullets = (mapMaybe update enemyBullets)}
 
  -- | Moves enemies, updates their shot cooldown and spawns bullets or explosions if necessary
 updateEnemies :: GameState -> GameState
 updateEnemies gstate@GameState{enemies = enemies, enemyBullets = enemyBullets, explosions = explosions} = gstate {enemies = (mapMaybe update enemies), enemyBullets = (spawnBullets enemies enemyBullets), explosions = ((explodeEnemies enemies) ++ explosions)}
+
+ -- | Updates spawn cooldown for waves and spawns enemies if necessary
+updateWaves :: GameState -> GameState
+updateWaves gstate@GameState{enemies = enemies, waves = waves} = gstate {waves = newWaves, enemies = (spawnEnemies newWaves enemies)}
+    where
+        newWaves = (mapMaybe update waves)
+        
+-- | Update the list of EXPLOSIONS!!!
+updateEXPLOSIONS :: GameState -> GameState
+updateEXPLOSIONS gstate@GameState{explosions = ex} = gstate {explosions = mapMaybe update ex}
 
 explodeEnemies :: [Enemy] -> [Explosion]
 explodeEnemies [] = []
@@ -60,16 +74,7 @@ explodeEnemies (e@Enemy{health = h}:xs)
     | h < 0 = explode e : explodeEnemies xs
     | otherwise = explodeEnemies xs
     
-
- -- | Updates spawn cooldown for waves and spawns enemies if necessary
-handleWaves :: GameState -> GameState
-handleWaves gstate@GameState{enemies = enemies, waves = waves} = gstate {waves = newWaves, enemies = (spawnEnemies newWaves enemies)}
-    where
-        newWaves = (mapMaybe updateAWave waves)
-
--- | Update the list of EXPLOSIONS!!!
-updateEXPLOSIONS :: GameState -> GameState
-updateEXPLOSIONS gstate@GameState{explosions = ex} = gstate {explosions = mapMaybe update ex}
+-- || Spawn stuff ######################################################################################################## | --
 
 -- | Puts all enemies that should be spawned by [Wave] this step in [Enemy]
 spawnEnemies :: [Wave] -> [Enemy] -> [Enemy]
@@ -85,13 +90,6 @@ spawnBullets (x:xs) bullets
     | enemyCanShoot x = spawnBullets xs ((enemyShoots x) : bullets)
     | otherwise       = spawnBullets xs bullets
     
--- | Functions that handle a single object (for map)
--- | TODO: ask how this can be done betterly
-updateAWave :: Wave -> Maybe Wave
-updateAWave wave@Wave{stepCounter = stepCounter, interval = interval, totalEnemies = totalEnemies, enemyCounter = enemyCounter}
-    | totalEnemies == enemyCounter = Nothing
-    | interval == stepCounter = Just wave {stepCounter = 0, enemyCounter = enemyCounter +1}
-    | otherwise = Just wave {stepCounter = stepCounter + 1}
 	
 -- || User input ######################################################################################################## | --
     
