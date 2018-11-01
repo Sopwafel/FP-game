@@ -20,9 +20,6 @@ data GameState = GameState {
 				 , explosions      :: [Explosion] -- All EXPLOSIONS currently in the game.
                  }
 
--- | Pictures!
-square = Polygon [(-2,-2),(2,-2),(2,2),(-2,2),(-2,-2)]
-
 -- || Type Classes and instances ######################################################################################### | --
 -- | Returns a picture of a drawable object
 class Draw d where
@@ -81,41 +78,27 @@ instance DamageAble Enemy where
 instance DamageAble Player where
     doDamage p@Player{health = h} bullet = p {health = (h-(damage bullet))}
     explode player@Player{location = location} = testExplosion {location = location}
-    
--- | 
+
+-- || Functions ######################################################################################################### | --
+-- | Checks if two Collideables collide
 collides :: (Collideable a, Collideable b) => a -> b -> Bool
 collides a b = collideHelper (loc a) (loc b) (fromIntegral((hitboxSize a) `div` 2)) (fromIntegral((hitboxSize b) `div` 2))
 collideHelper :: Point -> Point -> Float -> Float -> Bool
 collideHelper (x,y) (x2,y2) s1 s2 = x < (x2+s2) && (x+s1) > x2 && y < (y2+s2) && (y+s1) > y2
 
--- || Instances########################################################################################################## | --
--- | Bullet
-
-
-
-
+-- | Check if an enemy can shoot
+enemyCanShoot :: Enemy -> Bool
+enemyCanShoot Enemy{shotCooldown = shotCooldown, shotCooldownCounter = shotCooldownCounter} = shotCooldown == shotCooldownCounter
+enemyShoots :: Enemy -> Bullet
+enemyShoots Enemy{location = location, bullet = bullet} = bullet {location = location}
     
--- | Enemy
-
-
-
-
--- | Player
-
-
-    
--- || Game Data Types ################################################################################################### | --
+-- || Game Objects  ##################################################################################################### | --
 
 -- | This works because of the DuplicateRecordFields extension
 data Bullet = Bullet {location :: Point, damagePoints :: Int, image :: Picture, path :: ObjectPath, size :: Int}
   
 data Enemy  = Enemy {location :: Point, health :: Int, image :: Picture, path :: ObjectPath, bullet :: Bullet, shotCooldown :: Int, shotCooldownCounter :: Int, size :: Int } 
-       
-enemyCanShoot :: Enemy -> Bool
-enemyCanShoot Enemy{shotCooldown = shotCooldown, shotCooldownCounter = shotCooldownCounter} = shotCooldown == shotCooldownCounter
-enemyShoots :: Enemy -> Bullet
-enemyShoots Enemy{location = location, bullet = bullet} = bullet {location = location}
-
+      
 -- | The kinds of paths a bullet or enemy can follow
 data ObjectPath = StraightPath Float       -- Float is speed
     | AimedPath    Float Float             -- First Float is speed, second has range -1..1 and is the direction.
@@ -153,4 +136,7 @@ testPlayer    = Player { health = 10, image = color black (ThickCircle 5.0 10.0)
 testWave      = Wave {pattern = spawnPattern1, enemies = [testEnemy], interval = 30, enemyCounter = 1, stepCounter = 0, totalEnemies = 5}
 testExplosion = Explosion { scale = 100.0, countdown = 300, velocity = (0.0,0.0)}
 beginState    = GameState { player = testPlayer, pressedKeys = [], enemies = [], friendlyBullets = [], enemyBullets = [], waves = [], explosions = []}
+
+-- | Pictures!
+square = Polygon [(-2,-2),(2,-2),(2,2),(-2,2),(-2,-2)]
 
