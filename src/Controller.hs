@@ -60,7 +60,14 @@ handleWaves gstate@GameState{enemies = enemies, waves = waves} = gstate {waves =
     where
         newWaves = (mapMaybe updateAWave waves)
 
- -- | Puts all enemies that should be spawned by [Wave] this step in [Enemy]
+-- | Update the list of EXPLOSIONS!!!
+updateEXPLOSIONS :: GameState -> GameState
+updateEXPLOSIONS gstate@GameState{explosions = ex} = gstate {explosions = map updateAnEXPLOSION ex}
+
+updateAnEXPLOSION :: Explosion -> Explosion
+updateAnEXPLOSION boom@Explosion{countdown = count, location = (x, y), velocity = (x2, y2)} = boom {countdown = count - 1, location = ((x + x2), (y + y2))}
+
+-- | Puts all enemies that should be spawned by [Wave] this step in [Enemy]
 spawnEnemies :: [Wave] -> [Enemy] -> [Enemy]
 spawnEnemies [] enemies = enemies
 spawnEnemies (x:xs) enemies

@@ -33,6 +33,16 @@ drawEnemies :: [Enemy] -> [Picture]
 drawEnemies [] = []
 drawEnemies ((Enemy{image = img, location = (x,y)}):xs) = (translate x y img) : (drawEnemies xs)
 
+-- | EXPLOSION!!!!!
+drawEXPLOSION :: [Explosion] -> [Picture]
+drawEXPLOSION [] = []
+drawEXPLOSION (Explosion {countdown = timer, scale = s, location = (x, y)} : xs)
+  | timer < 0   = drawEXPLOSION xs
+  | timer < 100 = Color orange (ThickCircle 1.0 1.0) : drawEXPLOSION xs
+  | timer < 200 = Color orange (ThickCircle 1.0 2.0) : drawEXPLOSION xs
+  | timer < 300 = Color orange (ThickCircle 1.0 3.0) : drawEXPLOSION xs
+  | otherwise   = drawEXPLOSION xs
+
 drawThings :: (Draw a) => [a] -> [Picture]
 drawThings [] = []
 drawThings (thing:xs) = (draw thing) : (drawThings xs)
