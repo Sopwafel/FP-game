@@ -22,7 +22,7 @@ newStep secs gstate = return gstate
 
 -- | Updates the gamestate
 step :: Float -> GameState -> IO GameState
-step secs gstate = return (checkCollisions (moveEnemyBullets (updateEnemies (movePlayerBullets (doPressedKeys (handleWaves gstate))))))
+step secs gstate = return (updateEXPLOSIONS (checkCollisions (moveEnemyBullets (updateEnemies (movePlayerBullets (doPressedKeys (handleWaves gstate)))))))
 
 -- || Collision checks ################################################################################################## | --
 -- |
@@ -52,7 +52,7 @@ moveEnemyBullets gstate@GameState{enemyBullets = enemyBullets} = gstate {enemyBu
 
  -- | Moves enemies, updates their shot cooldown and spawns bullets or explosions if necessary
 updateEnemies :: GameState -> GameState
-updateEnemies gstate@GameState{enemies = enemies, enemyBullets = enemyBullets, explosions = explosions} = gstate {enemies = (mapMaybe update enemies), enemyBullets = (spawnBullets enemies enemyBullets), explosions = explosions}
+updateEnemies gstate@GameState{enemies = enemies, enemyBullets = enemyBullets, explosions = explosions} = gstate {enemies = (mapMaybe update enemies), enemyBullets = (spawnBullets enemies enemyBullets), explosions = ((explodeEnemies enemies) ++ explosions)}
 
 explodeEnemies :: [Enemy] -> [Explosion]
 explodeEnemies [] = []
@@ -69,10 +69,7 @@ handleWaves gstate@GameState{enemies = enemies, waves = waves} = gstate {waves =
 
 -- | Update the list of EXPLOSIONS!!!
 updateEXPLOSIONS :: GameState -> GameState
-updateEXPLOSIONS gstate@GameState{explosions = ex} = gstate {explosions = map updateAnEXPLOSION ex}
-
-updateAnEXPLOSION :: Explosion -> Explosion
-updateAnEXPLOSION boom@Explosion{countdown = count, location = (x, y), velocity = (x2, y2)} = boom {countdown = count - 1, location = ((x + x2), (y + y2))}
+updateEXPLOSIONS gstate@GameState{explosions = ex} = gstate {explosions = mapMaybe update ex}
 
 -- | Puts all enemies that should be spawned by [Wave] this step in [Enemy]
 spawnEnemies :: [Wave] -> [Enemy] -> [Enemy]

@@ -79,7 +79,7 @@ instance Collideable Enemy where
     hitboxSize Enemy{size = a} = a
 instance DamageAble Enemy where
     doDamage enemy@Enemy{health = h} bullet = enemy {health = (h-(damage bullet))}
-    explode enemy@Enemy{location = location} = Explosion { location = location, scale = 10.0, countdown = 10, velocity = (0.0,0.0)}
+    explode enemy@Enemy{location = location} = testExplosion {location = location }
         
 enemyCanShoot :: Enemy -> Bool
 enemyCanShoot Enemy{shotCooldown = shotCooldown, shotCooldownCounter = shotCooldownCounter} = shotCooldown == shotCooldownCounter
@@ -97,9 +97,13 @@ instance Collideable Player where
     hitboxSize Player{size = a} = a
 instance DamageAble Player where
     doDamage p@Player{health = h} bullet = p {health = (h-(damage bullet))}
-    explode player@Player{location = location} = Explosion { location = location, scale = 10.0, countdown = 10, velocity = (0.0,0.0)}
+    explode player@Player{location = location} = testExplosion {location = location}
 
 data Explosion = Explosion {location :: Point, scale :: Float, countdown :: Int, velocity :: Point}
+instance Update Explosion where
+    update boom@Explosion{countdown = count, location = (x, y), velocity = (x2, y2)}
+        | count > 0 = Just boom {countdown = count - 1, location = ((x + x2), (y + y2))}
+        | otherwise = Nothing
     
 -- || Wave logic ######################################################################################################## | --
 
@@ -126,5 +130,6 @@ testEnemy     = Enemy {health = 1, image = color black (ThickCircle 5.0 5.0), pa
 testBullet    = Bullet {damagePoints = 1, image = Circle 2.0, path = StraightPath 5.0, size = 20}
 testPlayer    = Player { health = 10, image = color black (ThickCircle 5.0 10.0),  location = (0.0, 0.0), bullet = testBullet, shotCooldown = 10, size = 10}
 testWave      = Wave {pattern = spawnPattern1, enemies = [testEnemy], interval = 30, enemyCounter = 1, stepCounter = 0, totalEnemies = 5}
+testExplosion = Explosion { scale = 100.0, countdown = 300, velocity = (0.0,0.0)}
 beginState    = GameState { player = testPlayer, pressedKeys = [], enemies = [], friendlyBullets = [], enemyBullets = [], waves = [], explosions = []}
 

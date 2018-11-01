@@ -19,9 +19,16 @@ view = return . viewPure
 -- | This itself is a Picture, so we can return it from viewPure
 viewPure :: GameState -> Picture
 viewPure GameState {player =Player {image = img, location = (x,y)}, friendlyBullets = pBullets, enemyBullets = enemyBullets, enemies = enemies, explosions = explosions} 
-    = Pictures ((translate x y img) : (drawBullets pBullets) ++ (drawBullets enemyBullets) ++ (drawEXPLOSION explosions) ++ (drawEnemies enemies))
+    = Pictures ((translate x y img) : (drawBullets pBullets) ++ (drawBullets enemyBullets) ++ (drawExplosions explosions) ++ (drawList 0.0 explosions) ++ (drawEnemies enemies))
             -- Player picture         Bullets
-            
+
+-- | Draw length of a list with circles
+drawList :: Float -> [a] -> [Picture]
+drawList _ []     = []
+-- drawlist n [x]    = (translate (-500.0) (n-500.0) (Circle 30.0)) : []
+drawList n (x:xs) = (translate (-400.0) (400.0-n) (Circle 30.0)) : (drawList (n+30.0) xs)
+
+
             
 -- | Puts all images from the bullets in a list of pictures
 drawBullets :: [Bullet] -> [Picture]
@@ -34,14 +41,14 @@ drawEnemies [] = []
 drawEnemies ((Enemy{image = img, location = (x,y)}):xs) = (translate x y img) : (drawEnemies xs)
 
 -- | EXPLOSION!!!!!
-drawEXPLOSION :: [Explosion] -> [Picture]
-drawEXPLOSION [] = []
-drawEXPLOSION (Explosion {countdown = timer, scale = s, location = (x, y)} : xs)
-  | timer < 0   = drawEXPLOSION xs
-  | timer < 100 = Color orange (ThickCircle 1.0 1.0) : drawEXPLOSION xs
-  | timer < 200 = Color orange (ThickCircle 1.0 2.0) : drawEXPLOSION xs
-  | timer < 300 = Color orange (ThickCircle 1.0 3.0) : drawEXPLOSION xs
-  | otherwise   = drawEXPLOSION xs
+drawExplosions :: [Explosion] -> [Picture]
+drawExplosions [] = []
+drawExplosions (Explosion {countdown = timer, scale = s, location = (x, y)} : xs)
+  | timer < 0   = drawExplosions xs
+  | timer < 100 = translate x y (Color orange (ThickCircle 1.0 10.0)) : drawExplosions xs
+  | timer < 200 = translate x y (Color orange (ThickCircle 1.0 20.0)) : drawExplosions xs
+  | timer < 300 = translate x y (Color orange (ThickCircle 1.0 30.0)) : drawExplosions xs
+  | otherwise   = drawExplosions xs
 
 drawThings :: (Draw a) => [a] -> [Picture]
 drawThings [] = []
