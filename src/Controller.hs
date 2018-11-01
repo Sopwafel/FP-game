@@ -22,18 +22,37 @@ newStep secs gstate = return gstate
 
 -- | Updates the gamestate
 step :: Float -> GameState -> IO GameState
-step secs gstate = return (moveEnemyBullets (updateEnemies (movePlayerBullets (doPressedKeys (handleWaves gstate)))))
+step secs gstate = return (checkCollisions (moveEnemyBullets (updateEnemies (movePlayerBullets (doPressedKeys (handleWaves gstate))))))
+
+-- || Collision checks ################################################################################################## | --
+-- |
+checkCollisions :: GameState -> GameState
+checkCollisions gstate = enemyCollision (playerCollision gstate)
+
+-- | Check if the player gets hit by a bullet
+playerCollision :: GameState -> GameState
+playerCollision gstate@GameState{player = player, enemyBullets = bullets} = gstate{player = (collideBulletsWithObject bullets player)}
+
+-- | Check if enemies get hit by bullets
+enemyCollision :: GameState -> GameState
+enemyCollision gstate@GameState{enemies = enemies, friendlyBullets = bullets} = gstate{enemies = (map (collideBulletsWithObject bullets) enemies)}
+
+collideBulletsWithObject :: (Collideable a, DamageAble a) => [Bullet] -> a -> a
+collideBulletsWithObject [] a = a
+collideBulletsWithObject (x:xs) a
+    | collides a x = collideBulletsWithObject xs (doDamage a x)
+    | otherwise = collideBulletsWithObject xs a
 
 -- || Update gamestate fields ########################################################################################### | --
 movePlayerBullets :: GameState -> GameState
-movePlayerBullets gstate@GameState{friendlyBullets = pBullets} = gstate {friendlyBullets = (map update pBullets)}
+movePlayerBullets gstate@GameState{friendlyBullets = pBullets} = gstate {friendlyBullets = (mapMaybe update pBullets)}
 
 moveEnemyBullets :: GameState -> GameState
-moveEnemyBullets gstate@GameState{enemyBullets = enemyBullets} = gstate {enemyBullets = (map update enemyBullets)}
+moveEnemyBullets gstate@GameState{enemyBullets = enemyBullets} = gstate {enemyBullets = (mapMaybe update enemyBullets)}
 
  -- | Moves enemies, updates their shot cooldown and spawns bullets if necessary
 updateEnemies :: GameState -> GameState
-updateEnemies gstate@GameState{enemies = enemies, enemyBullets = enemyBullets} = gstate {enemies = (map update enemies), enemyBullets = (spawnBullets enemies enemyBullets)}
+updateEnemies gstate@GameState{enemies = enemies, enemyBullets = enemyBullets} = gstate {enemies = (mapMaybe update enemies), enemyBullets = (spawnBullets enemies enemyBullets)}
 
  -- | Updates spawn cooldown for waves and spawns enemies if necessary
 handleWaves :: GameState -> GameState

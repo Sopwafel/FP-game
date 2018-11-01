@@ -28,56 +28,55 @@ class Draw d where
     draw            :: d -> Picture
 -- | Updates an object for 1 step
 class Update a where
-    update          :: a -> a
+    update          :: a -> Maybe a
     
-class Loc a where
+class Collideable a where
     loc             :: a -> Point
-class Size a where
-    size            :: a -> Int
+    hitboxSize      :: a -> Int
 
-collides :: (Loc a, Loc b, Size a, Size b) => a -> b -> Bool
-collides a b = collideHelper (loc a) (loc b) (round((size a)/2)) (round((size b)/2))
-
-collideHelper :: Point -> Point -> Int -> Int -> Bool
-collideHelper (x,y) (x2,y2) s1 s2 = x < (x2+s2) && (x+s1) > x2 && y < (y2+s2) && (y+s1) > y2
--- | Top left and bottom right points of the square hitbox
--- class Hitbox a where
-    -- hitbox    :: a -> (Point, Point)
+class Damage a where
+    damage          :: a -> Int
     
--- collides :: (Hitbox a) => a -> a -> Bool
--- collides a b = 
+class DamageAble a where
+    doDamage        :: (Damage b) => a -> b -> a
+    
+-- |
+collides :: (Collideable a, Collideable b) => a -> b -> Bool
+collides a b = collideHelper (loc a) (loc b) (fromIntegral((hitboxSize a) `div` 2)) (fromIntegral((hitboxSize b) `div` 2))
+collideHelper :: Point -> Point -> Float -> Float -> Bool
+collideHelper (x,y) (x2,y2) s1 s2 = x < (x2+s2) && (x+s1) > x2 && y < (y2+s2) && (y+s1) > y2
 
--- collideHelper :: (Point, Point) -> (Point, Point) ->
--- collideHelper ((x1,y1) (x2,y2)) ((a1,b1) (a2,b2))
 
 -- || Game Data Types ################################################################################################### | --
 
 -- | This works because of the DuplicateRecordFields extension
-data Bullet = Bullet {location :: Point, damage :: Int, image :: Picture, path :: ObjectPath, size :: Int}
+data Bullet = Bullet {location :: Point, damagePoints :: Int, image :: Picture, path :: ObjectPath, size :: Int}
 instance Draw Bullet where
     draw Bullet {image = img, location = (x,y)} = (translate x y img)
 instance Update Bullet where
-    update bullet@Bullet{location = (x,y), path = StraightPath v} = bullet {location = (x+v, y)} :: Bullet
-
--- | These classes are necessary for collision detection
-instance Loc Bullet where
+    update bullet@Bullet{location = (x,y), path = StraightPath v} = Just (bullet {location = (x+v, y)} :: Bullet)
+instance Collideable Bullet where
     loc Bullet{location = a} = a
-instance Size Bullet where
-    size Bullet{size = a} = a
+    hitboxSize Bullet{size = a} = a
+instance Damage Bullet where
+    damage Bullet{damagePoints = d} = d
+    
 
 
     
-data Enemy  = Enemy {location :: Point, health :: Int, image :: Picture, path :: ObjectPath, bullet :: Bullet, shotCooldown :: Int, shotCooldownCounter :: Int } 
+data Enemy  = Enemy {location :: Point, health :: Int, image :: Picture, path :: ObjectPath, bullet :: Bullet, shotCooldown :: Int, shotCooldownCounter :: Int, size :: Int } 
 instance Draw Enemy where
     draw Enemy {image = img, location = (x,y)} = (translate x y img)
 instance Update Enemy where
-    update enemy@Enemy{location   = (x,y), path = StraightPath v, shotCooldownCounter = shotCooldownCounter, shotCooldown = shotCooldown}
-        | shotCooldownCounter < shotCooldown = enemy  {location = (x+v, y), shotCooldownCounter = shotCooldownCounter +1} :: Enemy
-        | otherwise = enemy  {location = (x+v, y), shotCooldownCounter = 0} :: Enemy
-instance Loc Bullet where
+    update enemy@Enemy{location   = (x,y), path = StraightPath v, shotCooldownCounter = shotCooldownCounter, shotCooldown = shotCooldown, health = h}
+        | h < 0 = Nothing
+        | shotCooldownCounter < shotCooldown = Just enemy  {location = (x+v, y), shotCooldownCounter = shotCooldownCounter +1} :: Maybe Enemy
+        | otherwise = Just enemy  {location = (x+v, y), shotCooldownCounter = 0} :: Maybe Enemy
+instance Collideable Enemy where
     loc Enemy{location = a} = a
-instance Size Bullet where
-    size Enemy{size = a} = a
+    hitboxSize Enemy{size = a} = a
+instance DamageAble Enemy where
+    doDamage enemy@Enemy{health = h} bullet = enemy {health = (h-(damage bullet))}
         
 enemyCanShoot :: Enemy -> Bool
 enemyCanShoot Enemy{shotCooldown = shotCooldown, shotCooldownCounter = shotCooldownCounter} = shotCooldown == shotCooldownCounter
@@ -89,11 +88,12 @@ data ObjectPath = StraightPath Float       -- Float is speed
     | AimedPath    Float Float             -- First Float is speed, second has range -1..1 and is the direction.
     | HomingPath   Float Float Float       -- First Float is speed, second has range -1..1 and is the direction, third has range 0..1 and is turning rate
 
-data Player = Player { image :: Picture, location :: Point, bullet :: Bullet, shotCooldown :: Int}
-instance Loc Player where
+data Player = Player { image :: Picture, location :: Point, bullet :: Bullet, shotCooldown :: Int, size :: Int, health :: Int}
+instance Collideable Player where
     loc Player{location = a} = a
-instance Size Player where
-    size Player{size = a} = a
+    hitboxSize Player{size = a} = a
+instance DamageAble Player where
+    doDamage p@Player{health = h} bullet = p {health = (h-(damage bullet))}
 
 -- data Explosion = Explosion {location :: Point, size :: Int}
     
@@ -118,9 +118,9 @@ waveNeedsSpawn Wave{interval = interval, stepCounter = stepCounter} = interval =
 -- || Objects ########################################################################################################### | --
 -- | These are actual objects with values filled in | --
 spawnPattern1 = SpawnPattern [-0.5, 0.0, 0.5]
-testEnemy     = Enemy {image = color red (ThickCircle 5.0 5.0), path = StraightPath (-3.0), bullet = testBullet {path = StraightPath (-5.0)}, shotCooldown = 30, shotCooldownCounter = 0}
-testBullet    = Bullet {damage = 1, image = Circle 1.0, path = StraightPath 5.0}
-testPlayer    = Player { image = color blue (ThickCircle 5.0 10.0),  location = (0.0, 0.0), bullet = testBullet, shotCooldown = 10}
+testEnemy     = Enemy {health = 1, image = color black (ThickCircle 5.0 5.0), path = StraightPath (-3.0), bullet = testBullet {path = StraightPath (-5.0)}, shotCooldown = 30, shotCooldownCounter = 0, size = 10}
+testBullet    = Bullet {damagePoints = 1, image = Circle 2.0, path = StraightPath 5.0, size = 20}
+testPlayer    = Player { health = 10, image = color black (ThickCircle 5.0 10.0),  location = (0.0, 0.0), bullet = testBullet, shotCooldown = 10, size = 10}
 testWave      = Wave {pattern = spawnPattern1, enemies = [testEnemy], interval = 30, enemyCounter = 1, stepCounter = 0, totalEnemies = 5}
 beginState    = GameState { player = testPlayer, pressedKeys = [], enemies = [], friendlyBullets = [], enemyBullets = [], waves = []}
 
