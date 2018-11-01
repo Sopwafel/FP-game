@@ -45,9 +45,18 @@ drawExplosions :: [Explosion] -> [Picture]
 drawExplosions [] = []
 drawExplosions (Explosion {countdown = timer, scale = s, location = (x, y)} : xs)
   | timer < 0   = drawExplosions xs
-  | timer < 100 = translate x y (Color orange (ThickCircle 1.0 10.0)) : drawExplosions xs
-  | timer < 200 = translate x y (Color orange (ThickCircle 1.0 20.0)) : drawExplosions xs
-  | timer < 300 = translate x y (Color orange (ThickCircle 1.0 30.0)) : drawExplosions xs
+  | timer < 25  = translate x y (color orange (ThickCircle 1.0 5.0))  : drawExplosions xs
+  | timer < 50  = translate x y (Color orange (ThickCircle 1.0 7.5))  : drawExplosions xs
+  | timer < 75  = translate x y (color orange (ThickCircle 1.0 10.0)) : drawExplosions xs
+  | timer < 100 = translate x y (Color orange (ThickCircle 1.0 12.5)) : drawExplosions xs
+  | timer < 125 = translate x y (color orange (ThickCircle 1.0 15.0)) : translate x y (color yellow (ThickCircle 0.1 5.0))   : drawExplosions xs
+  | timer < 150 = translate x y (Color orange (ThickCircle 1.0 20.0)) : translate x y (color yellow (ThickCircle 0.15 10.0)) : drawExplosions xs
+  | timer < 175 = translate x y (color orange (ThickCircle 1.0 25.0)) : translate x y (color yellow (ThickCircle 0.25 15.0)) : drawExplosions xs
+  | timer < 200 = translate x y (color orange (ThickCircle 1.0 30.0)) : translate x y (color yellow (ThickCircle 17.5 17.5)) : drawExplosions xs
+  | timer < 225 = translate x y (color orange (ThickCircle 1.0 25.0)) : translate x y (color yellow (ThickCircle 0.5 15.0))  : drawExplosions xs
+  | timer < 250 = translate x y (color orange (ThickCircle 1.0 20.0)) : translate x y (color yellow (ThickCircle 1.0 10.0))  : drawExplosions xs
+  | timer < 275 = translate x y (color orange (ThickCircle 1.0 15.0)) : translate x y (color yellow (ThickCircle 1.0 5.0))   : drawExplosions xs
+  | timer < 300 = translate x y (color orange (ThickCircle 1.0 10.0)) : drawExplosions xs
   | otherwise   = drawExplosions xs
 
 drawThings :: (Draw a) => [a] -> [Picture]
