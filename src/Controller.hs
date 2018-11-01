@@ -50,9 +50,16 @@ movePlayerBullets gstate@GameState{friendlyBullets = pBullets} = gstate {friendl
 moveEnemyBullets :: GameState -> GameState
 moveEnemyBullets gstate@GameState{enemyBullets = enemyBullets} = gstate {enemyBullets = (mapMaybe update enemyBullets)}
 
- -- | Moves enemies, updates their shot cooldown and spawns bullets if necessary
+ -- | Moves enemies, updates their shot cooldown and spawns bullets or explosions if necessary
 updateEnemies :: GameState -> GameState
-updateEnemies gstate@GameState{enemies = enemies, enemyBullets = enemyBullets} = gstate {enemies = (mapMaybe update enemies), enemyBullets = (spawnBullets enemies enemyBullets)}
+updateEnemies gstate@GameState{enemies = enemies, enemyBullets = enemyBullets, explosions = explosions} = gstate {enemies = (mapMaybe update enemies), enemyBullets = (spawnBullets enemies enemyBullets), explosions = explosions}
+
+explodeEnemies :: [Enemy] -> [Explosion]
+explodeEnemies [] = []
+explodeEnemies (e@Enemy{health = h}:xs)
+    | h < 0 = explode e : explodeEnemies xs
+    | otherwise = explodeEnemies xs
+    
 
  -- | Updates spawn cooldown for waves and spawns enemies if necessary
 handleWaves :: GameState -> GameState
