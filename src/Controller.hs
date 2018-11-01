@@ -89,8 +89,7 @@ spawnBullets [] bullets = bullets
 spawnBullets (x:xs) bullets
     | enemyCanShoot x = spawnBullets xs ((enemyShoots x) : bullets)
     | otherwise       = spawnBullets xs bullets
-    
-	
+
 -- || User input ######################################################################################################## | --
     
 -- | Handle user input
@@ -120,7 +119,11 @@ doPressedKeys gstate@GameState{pressedKeys = keyList} = foldr keyBeingPressed gs
 -- | I was thinking we could map this function over the keyPressed array
 -- | And change the gamestate for each key that's being held
 keyBeingPressed :: Key -> GameState -> GameState
-keyBeingPressed key gstate@GameState{player = pl@Player{location   = (x,y), bullet = pBullet}}
+keyBeingPressed key gstate@GameState{player = pl@Player{location   = (x,y), bullet = pBullet}, screensize = (width, height)}
+    | x >= (width/2)   && key == (SpecialKey KeyRight) = gstate
+	| x <= -(width/2)  && key == (SpecialKey KeyLeft)  = gstate
+	| y >= (height/2)  && key == (SpecialKey KeyUp)    = gstate
+	| y <= -(height/2) && key == (SpecialKey KeyDown)  = gstate
     | key == (SpecialKey KeyUp)    = gstate {player = pl {location = (x,(y+stepSize))}}
     | key == (SpecialKey KeyDown)  = gstate {player = pl {location = (x,(y-stepSize))}}
     | key == (SpecialKey KeyRight) = gstate {player = pl {location = ((x+stepSize),y)}}

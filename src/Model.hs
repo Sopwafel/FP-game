@@ -18,6 +18,7 @@ data GameState = GameState {
                  , enemyBullets    :: [Bullet]    -- All enemy bullets. Get moved every step. TODO: check collission with player
                  , waves           :: [Wave]      -- Every step, all waves are evaluated and updated. If necessary, an enemy is spawned from them.
 				 , explosions      :: [Explosion] -- All EXPLOSIONS currently in the game.
+				 , screensize      :: Point       -- Size of the widow
                  }
 
 -- || Type Classes and instances ######################################################################################### | --
