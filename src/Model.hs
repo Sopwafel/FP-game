@@ -96,6 +96,11 @@ enemyCanShoot :: Enemy -> Bool
 enemyCanShoot Enemy{shotCooldown = shotCooldown, shotCooldownCounter = shotCooldownCounter} = shotCooldown == shotCooldownCounter
 enemyShoots :: Enemy -> Bullet
 enemyShoots Enemy{location = location, bullet = bullet} = bullet {location = location}
+
+updateLocation :: Point -> ObjectPath -> Point
+updateLocation (x,y) (StraightPath f)  = (x+f,y)
+updateLocation (x,y) (AimedPath fx fy) = (x+fx, y+fy)
+updateLocation (x,y) (HomingPath f1 f2 f3) = undefined
     
 -- || Game Objects  ##################################################################################################### | --
 
@@ -105,9 +110,10 @@ data Bullet = Bullet {location :: Point, damagePoints :: Int, image :: Picture, 
 data Enemy  = Enemy {location :: Point, health :: Int, image :: Picture, path :: ObjectPath, bullet :: Bullet, shotCooldown :: Int, shotCooldownCounter :: Int, size :: Int } 
       
 -- | The kinds of paths a bullet or enemy can follow
-data ObjectPath = StraightPath Float       -- Float is speed
-    | AimedPath    Float Float             -- First Float is speed, second has range -1..1 and is the direction.
-    | HomingPath   Float Float Float       -- First Float is speed, second has range -1..1 and is the direction, third has range 0..1 and is turning rate
+data ObjectPath = StraightPath Float      -- Float is x speed
+    | AimedPath   Float Float             -- First Float is x speed, second y speed
+    | HomingPath  Float Float Float       -- First Float is x speed, second y speed, third has range 0..1 and is turning rate
+    | SinoidPath  Float                   -- First Float is speed, second is magnitude (a in f(x) = a*sin(x))
 
 data Player = Player { image :: Picture, location :: Point, bullet :: Bullet, shotCooldown :: Int, size :: Int, health :: Int}
 
@@ -141,6 +147,15 @@ testPlayer    = Player { health = 10, image = color black (ThickCircle 5.0 10.0)
 testWave      = Wave {pattern = spawnPattern1, enemies = [testEnemy], interval = 30, enemyCounter = 1, stepCounter = 0, totalEnemies = 5}
 testExplosion = Explosion { scale = 100.0, countdown = 300, velocity = (0.0,0.0)}
 beginState    = GameState { player = testPlayer, pressedKeys = [], enemies = [], friendlyBullets = [], enemyBullets = [], waves = [], explosions = []}
+
+-- |
+aimBulletAtPoint :: Point -> Bullet -> Bullet
+aimBulletAtPoint = undefined
+-- aimBulletAtPoint (x,y) b@Bullet{location = (xb, yb)} = b{path = (AimedPath dxdy (1-f)}
+    -- where
+        -- dx   = xb-x
+        -- dy   = yb-y
+        -- dxdy = (dx `div` dy)
 
 -- | Pictures!
 square = Polygon [(-2,-2),(2,-2),(2,2),(-2,2),(-2,-2)]
