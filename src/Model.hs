@@ -34,25 +34,32 @@ instance Draw Enemy where
     
 -- | Updates an object for 1 step
 class Update a where
-    update          :: a -> Maybe a
+    update          :: Float -> Float -> a -> Maybe a
 
 instance Update Bullet where
-    update bullet@Bullet{location = location, path = path} = Just (bullet {location = (updateLocation location path)} :: Bullet)    
+    update width height bullet@Bullet{location = location, path = path}  
+        | outOfScreen location width height = Nothing
+        | otherwise = Just (bullet {location = (updateLocation location path)} :: Bullet)   
 instance Update Enemy where
-    update enemy@Enemy{location   = (x,y), path = StraightPath v, shotCooldownCounter = shotCooldownCounter, shotCooldown = shotCooldown, health = h}
+    update  width height enemy@Enemy{location   = (x,y), path = StraightPath v, shotCooldownCounter = shotCooldownCounter, shotCooldown = shotCooldown, health = h}
+        | outOfScreen (x,y) width height = Nothing
         | h < 0 = Nothing
         | shotCooldownCounter < shotCooldown = Just enemy  {location = (x+v, y), shotCooldownCounter = shotCooldownCounter +1} :: Maybe Enemy
         | otherwise = Just enemy  {location = (x+v, y), shotCooldownCounter = 0} :: Maybe Enemy
 instance Update Explosion where
-    update boom@Explosion{countdown = count, location = (x, y), velocity = (x2, y2)}
+    update  width height boom@Explosion{countdown = count, location = (x, y), velocity = (x2, y2)}
         | count > 0 = Just boom {countdown = count - 1, location = ((x + x2), (y + y2))}
         | otherwise = Nothing
 instance Update Wave where
-    update wave@Wave{stepCounter = stepCounter, interval = interval, totalEnemies = totalEnemies, enemyCounter = enemyCounter}
+    update width height wave@Wave{stepCounter = stepCounter, interval = interval, totalEnemies = totalEnemies, enemyCounter = enemyCounter}
         | totalEnemies == enemyCounter = Nothing
         | interval == stepCounter = Just wave {stepCounter = 0, enemyCounter = enemyCounter +1}
         | otherwise = Just wave {stepCounter = stepCounter + 1}
+        
+outOfScreen :: Point -> Float -> Float -> Bool
+outOfScreen (x,y) width height = or [(x >= (width/2)),(x <= -(width/2)), (y >= (height/2) ), (y <= -(height/2))]
 
+        
 -- | An object that can collide with another object
 class Collideable a where
     loc             :: a -> Point
@@ -142,7 +149,7 @@ data SpawnPattern = SpawnPattern [Float]
 
 -- | Evaluates a wave and returns the correct Enemy in the correct spot
 nextEnemy :: Wave -> Enemy
-nextEnemy Wave{enemyCounter = n, enemies = enemies, pattern = (SpawnPattern np)} = testEnemy{location = (800, (450*(np!!patternIndex)))}
+nextEnemy Wave{enemyCounter = n, enemies = enemies, pattern = (SpawnPattern np)} = testEnemy{location = (799, (450*(np!!patternIndex)))}
     where
         enemyIndex   = (length enemies) `mod` n
         patternIndex = n `mod` (length np)

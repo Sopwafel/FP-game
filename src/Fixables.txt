@@ -1,4 +1,8 @@
 Things to add
+- MENUS
+	- At start of game
+	- When player dies
+	- Pause menu
 - Paths
 - Player health
 - PowerUps

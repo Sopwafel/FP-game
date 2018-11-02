@@ -18,7 +18,7 @@ view = return . viewPure
 -- | Pictures[picture1, picture2, picture3]
 -- | This itself is a Picture, so we can return it from viewPure
 viewPure :: GameState -> Picture
-viewPure GameState {player =Player {image = img, location = (x,y)}, friendlyBullets = pBullets, enemyBullets = enemyBullets, enemies = enemies, explosions = explosions, score = score} 
+viewPure GameState {player =Player {image = img, location = (x,y) , health = health}, friendlyBullets = pBullets, enemyBullets = enemyBullets, enemies = enemies, explosions = explosions, score = score} 
     = Pictures ((translate x y img) : (drawScore score) : (drawBullets pBullets) ++ (drawBullets enemyBullets) ++ (drawExplosions explosions) ++ (drawEnemies enemies))
             -- Player picture         Bullets
             -- : (drawLocation (x,y))

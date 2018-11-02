@@ -16,10 +16,6 @@ nO_SECS_BETWEEN_CYCLES =1
 
 stepSize = 5
 
--- | Handle one iteration of the game
-newStep :: Float -> GameState -> IO GameState
-newStep secs gstate = return gstate
-
 -- | Updates the gamestate
 step :: Float -> GameState -> IO GameState
 step secs gstate = return (checkCollisions (updateFields (doPressedKeys gstate)))
@@ -49,40 +45,35 @@ collideBulletsWithObject (x:xs) a
 -- || Update gamestate fields ########################################################################################### | --
 
 updatePlayerBullets :: GameState -> GameState
-updatePlayerBullets gstate@GameState{friendlyBullets = pBullets} = gstate {friendlyBullets = (mapMaybe update pBullets)}
+updatePlayerBullets gstate@GameState{friendlyBullets = pBullets, screensize = (x,y)} = gstate {friendlyBullets = (mapMaybe (update x y) pBullets)}
 
 updateEnemyBullets :: GameState -> GameState
-updateEnemyBullets gstate@GameState{enemyBullets = enemyBullets} = gstate {enemyBullets = (mapMaybe update enemyBullets)}
+updateEnemyBullets gstate@GameState{enemyBullets = enemyBullets, screensize = (x,y)} = gstate {enemyBullets = (mapMaybe (update x y) enemyBullets)}
 
  -- | Moves enemies, updates their shot cooldown and spawns bullets or explosions if necessary
 updateEnemies :: GameState -> GameState
-updateEnemies gstate@GameState{enemies = enemies, enemyBullets = enemyBullets, explosions = explosions, player = Player{location = ploc}, score = score} = 
-    gstate {enemies = (mapMaybe update enemies), 
+updateEnemies gstate@GameState{enemies = enemies, enemyBullets = enemyBullets, explosions = explosions, player = Player{location = ploc}, score = score, screensize = (x,y)} = 
+    gstate {enemies = (mapMaybe (update x y) enemies), 
     enemyBullets = (spawnBullets enemies enemyBullets ploc), 
     explosions = ((explodeEnemies enemies) ++ explosions),
     score = score + (scoreEnemies enemies)}
 
  -- | Updates spawn cooldown for waves and spawns enemies if necessary
 updateWaves :: GameState -> GameState
-updateWaves gstate@GameState{enemies = enemies, waves = waves} = gstate {waves = newWaves, enemies = (spawnEnemies newWaves enemies)}
+updateWaves gstate@GameState{enemies = enemies, waves = waves, screensize = (x,y)} = gstate {waves = newWaves, enemies = (spawnEnemies newWaves enemies)}
     where
-        newWaves = (mapMaybe update waves)
+        newWaves = (mapMaybe (update x y) waves)
         
 -- | Update the list of EXPLOSIONS!!!
 updateEXPLOSIONS :: GameState -> GameState
-updateEXPLOSIONS gstate@GameState{explosions = ex} = gstate {explosions = mapMaybe update ex}
+updateEXPLOSIONS gstate@GameState{explosions = ex} = gstate {explosions = mapMaybe (update 0.0 0.0) ex }
 
+-- | Enemies that are damaged to below 0 hp stay in the list for one step, and in this time they can be scored
 scoreEnemies :: [Enemy] -> Int
 scoreEnemies [] = 0
 scoreEnemies (Enemy{health = h, score = score}:xs)
     | h < 0 = score + scoreEnemies xs
     | otherwise = scoreEnemies xs
-
-explodeEnemies :: [Enemy] -> [Explosion]
-explodeEnemies [] = []
-explodeEnemies (e@Enemy{health = h}:xs)
-    | h < 0 = explode e : explodeEnemies xs
-    | otherwise = explodeEnemies xs
     
 -- || Spawn stuff ######################################################################################################## | --
 
@@ -99,6 +90,13 @@ spawnBullets [] bullets point = bullets
 spawnBullets (x:xs) bullets point
     | enemyCanShoot x = spawnBullets xs ((enemyShoots x point) : bullets) point
     | otherwise       = spawnBullets xs bullets point
+    
+-- | Spawn an explosion on every < 0 hp enemy
+explodeEnemies :: [Enemy] -> [Explosion]
+explodeEnemies [] = []
+explodeEnemies (e@Enemy{health = h}:xs)
+    | h < 0 = explode e : explodeEnemies xs
+    | otherwise = explodeEnemies xs
 
 -- || User input ######################################################################################################## | --
     
@@ -131,9 +129,9 @@ doPressedKeys gstate@GameState{pressedKeys = keyList} = foldr keyBeingPressed gs
 keyBeingPressed :: Key -> GameState -> GameState
 keyBeingPressed key gstate@GameState{player = pl@Player{location   = (x,y), bullet = pBullet}, screensize = (width, height)}
     | x >= (width/2)   && key == (SpecialKey KeyRight) = gstate
-	| x <= -(width/2)  && key == (SpecialKey KeyLeft)  = gstate
-	| y >= (height/2)  && key == (SpecialKey KeyUp)    = gstate
-	| y <= -(height/2) && key == (SpecialKey KeyDown)  = gstate
+    | x <= -(width/2)  && key == (SpecialKey KeyLeft)  = gstate
+    | y >= (height/2)  && key == (SpecialKey KeyUp)    = gstate
+    | y <= -(height/2) && key == (SpecialKey KeyDown)  = gstate
     | key == (SpecialKey KeyUp)    = gstate {player = pl {location = (x,(y+stepSize))}}
     | key == (SpecialKey KeyDown)  = gstate {player = pl {location = (x,(y-stepSize))}}
     | key == (SpecialKey KeyRight) = gstate {player = pl {location = ((x+stepSize),y)}}
