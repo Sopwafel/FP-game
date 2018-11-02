@@ -56,7 +56,7 @@ updateEnemyBullets gstate@GameState{enemyBullets = enemyBullets} = gstate {enemy
 
  -- | Moves enemies, updates their shot cooldown and spawns bullets or explosions if necessary
 updateEnemies :: GameState -> GameState
-updateEnemies gstate@GameState{enemies = enemies, enemyBullets = enemyBullets, explosions = explosions} = gstate {enemies = (mapMaybe update enemies), enemyBullets = (spawnBullets enemies enemyBullets), explosions = ((explodeEnemies enemies) ++ explosions)}
+updateEnemies gstate@GameState{enemies = enemies, enemyBullets = enemyBullets, explosions = explosions, player = Player{location = ploc}} = gstate {enemies = (mapMaybe update enemies), enemyBullets = (spawnBullets enemies enemyBullets ploc), explosions = ((explodeEnemies enemies) ++ explosions)}
 
  -- | Updates spawn cooldown for waves and spawns enemies if necessary
 updateWaves :: GameState -> GameState
@@ -83,12 +83,12 @@ spawnEnemies (x:xs) enemies
     | waveNeedsSpawn x = spawnEnemies xs ((nextEnemy x) : enemies)
     | otherwise        = spawnEnemies xs enemies
 
- -- | Puts all bullets that should be spawned by [Enemy] this step in [Bullet]
-spawnBullets :: [Enemy] -> [Bullet] -> [Bullet]
-spawnBullets [] bullets = bullets
-spawnBullets (x:xs) bullets
-    | enemyCanShoot x = spawnBullets xs ((enemyShoots x) : bullets)
-    | otherwise       = spawnBullets xs bullets
+ -- | Puts all bullets that should be spawned by [Enemy] this step in [Bullet]. Point is the location of the player
+spawnBullets :: [Enemy] -> [Bullet] -> Point -> [Bullet]
+spawnBullets [] bullets point = bullets
+spawnBullets (x:xs) bullets point
+    | enemyCanShoot x = spawnBullets xs ((enemyShoots x point) : bullets) point
+    | otherwise       = spawnBullets xs bullets point
 
 -- || User input ######################################################################################################## | --
     

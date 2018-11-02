@@ -19,8 +19,9 @@ view = return . viewPure
 -- | This itself is a Picture, so we can return it from viewPure
 viewPure :: GameState -> Picture
 viewPure GameState {player =Player {image = img, location = (x,y)}, friendlyBullets = pBullets, enemyBullets = enemyBullets, enemies = enemies, explosions = explosions} 
-    = Pictures ((translate x y img) : (drawBullets pBullets) ++ (drawBullets enemyBullets) ++ (drawExplosions explosions) ++ (drawList 0.0 explosions) ++ (drawEnemies enemies))
+    = Pictures ((translate x y img)  : (drawBullets pBullets) ++ (drawBullets enemyBullets) ++ (drawExplosions explosions) ++ (drawEnemies enemies))
             -- Player picture         Bullets
+            -- : (drawLocation (x,y))
 
 -- | Draw length of a list with circles
 drawList :: Float -> [a] -> [Picture]
@@ -28,7 +29,8 @@ drawList _ []     = []
 -- drawlist n [x]    = (translate (-500.0) (n-500.0) (Circle 30.0)) : []
 drawList n (x:xs) = (translate (-400.0) (400.0-n) (Circle 30.0)) : (drawList (n+30.0) xs)
 
-
+drawLocation :: Point -> Picture
+drawLocation (x,y) = (translate (-600.0) (300.0) (Text ((show x) ++ ","++ (show y))))
             
 -- | Puts all images from the bullets in a list of pictures
 drawBullets :: [Bullet] -> [Picture]

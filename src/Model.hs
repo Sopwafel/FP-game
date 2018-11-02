@@ -36,7 +36,7 @@ class Update a where
     update          :: a -> Maybe a
 
 instance Update Bullet where
-    update bullet@Bullet{location = (x,y), path = StraightPath v} = Just (bullet {location = (x+v, y)} :: Bullet)    
+    update bullet@Bullet{location = location, path = path} = Just (bullet {location = (updateLocation location path)} :: Bullet)    
 instance Update Enemy where
     update enemy@Enemy{location   = (x,y), path = StraightPath v, shotCooldownCounter = shotCooldownCounter, shotCooldown = shotCooldown, health = h}
         | h < 0 = Nothing
@@ -95,12 +95,22 @@ collideHelper (x,y) (x2,y2) s1 s2 = x < (x2+s2) && (x+s1) > x2 && y < (y2+s2) &&
 -- | Check if an enemy can shoot
 enemyCanShoot :: Enemy -> Bool
 enemyCanShoot Enemy{shotCooldown = shotCooldown, shotCooldownCounter = shotCooldownCounter} = shotCooldown == shotCooldownCounter
-enemyShoots :: Enemy -> Bullet
-enemyShoots Enemy{location = location, bullet = bullet} = bullet {location = location}
+enemyShoots :: Enemy -> Point -> Bullet
+enemyShoots Enemy{location = location, bullet = bullet@Bullet{path = StraightPath v}} point = bullet {location = location}
+enemyShoots Enemy{location = location, bullet = bullet@Bullet{path = AimedPath p v} } point = aimBulletAtPoint point (bullet {location = location})
+
+-- |
+aimBulletAtPoint :: Point -> Bullet -> Bullet
+aimBulletAtPoint (x,y) b@Bullet{location = (xb, yb), path = AimedPath v p} = b {path = AimedPath v ((dx / total), (dy / total))}
+    where
+        dx   = x-xb
+        dy   = y-yb
+        total= (abs dx)+(abs dy)
+
 
 updateLocation :: Point -> ObjectPath -> Point
-updateLocation (x,y) (StraightPath f)  = (x+f,y)
-updateLocation (x,y) (AimedPath fx fy) = (x+fx, y+fy)
+updateLocation (x,y) (StraightPath f)  = (x-f,y)
+updateLocation (x,y) (AimedPath v (fx,fy)) = (x+(fx * v), y+(fy*v))
 updateLocation (x,y) (HomingPath f1 f2 f3) = undefined
     
 -- || Game Objects  ##################################################################################################### | --
@@ -112,7 +122,7 @@ data Enemy  = Enemy {location :: Point, health :: Int, image :: Picture, path ::
       
 -- | The kinds of paths a bullet or enemy can follow
 data ObjectPath = StraightPath Float      -- Float is x speed
-    | AimedPath   Float Float             -- First Float is x speed, second y speed
+    | AimedPath   Float Point             -- First Float is speed, second x and y parts of speed
     | HomingPath  Float Float Float       -- First Float is x speed, second y speed, third has range 0..1 and is turning rate
     | SinoidPath  Float                   -- First Float is speed, second is magnitude (a in f(x) = a*sin(x))
 
@@ -142,21 +152,14 @@ waveNeedsSpawn Wave{interval = interval, stepCounter = stepCounter} = interval =
 -- || Objects ########################################################################################################### | --
 -- | These are actual objects with values filled in | --
 spawnPattern1 = SpawnPattern [-0.5, 0.0, 0.5]
-testEnemy     = Enemy {health = 1, image = color black (ThickCircle 5.0 5.0), path = StraightPath (-3.0), bullet = testBullet {path = StraightPath (-5.0)}, shotCooldown = 30, shotCooldownCounter = 0, size = 10}
-testBullet    = Bullet {damagePoints = 1, image = Circle 2.0, path = StraightPath 5.0, size = 20}
+testEnemy     = Enemy {health = 1, image = color black (ThickCircle 5.0 5.0), path = StraightPath (-3.0), bullet = testBulletAimed, shotCooldown = 30, shotCooldownCounter = 0, size = 10}
+testBullet    = Bullet {damagePoints = 1, image = Circle 2.0, path = StraightPath (-5.0), size = 20}
+testBulletAimed = Bullet {damagePoints = 1, image = Circle 2.0, path = AimedPath 5.0 (10.0,1.0), size = 20}
 testPlayer    = Player { health = 10, image = color black (ThickCircle 5.0 10.0),  location = (0.0, 0.0), bullet = testBullet, shotCooldown = 10, size = 10}
 testWave      = Wave {pattern = spawnPattern1, enemies = [testEnemy], interval = 30, enemyCounter = 1, stepCounter = 0, totalEnemies = 5}
 testExplosion = Explosion { scale = 100.0, countdown = 300, velocity = (0.0,0.0)}
 beginState    = GameState { player = testPlayer, pressedKeys = [], enemies = [], friendlyBullets = [], enemyBullets = [], waves = [], explosions = []}
 
--- |
-aimBulletAtPoint :: Point -> Bullet -> Bullet
-aimBulletAtPoint = undefined
--- aimBulletAtPoint (x,y) b@Bullet{location = (xb, yb)} = b{path = (AimedPath dxdy (1-f)}
-    -- where
-        -- dx   = xb-x
-        -- dy   = yb-y
-        -- dxdy = (dx `div` dy)
 
 -- | Pictures!
 square = Polygon [(-2,-2),(2,-2),(2,2),(-2,2),(-2,-2)]
