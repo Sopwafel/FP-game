@@ -19,6 +19,7 @@ data GameState = GameState {
                  , waves           :: [Wave]      -- Every step, all waves are evaluated and updated. If necessary, an enemy is spawned from them.
 				 , explosions      :: [Explosion] -- All EXPLOSIONS currently in the game.
 				 , screensize      :: Point       -- Size of the widow
+                 , score           :: Int
                  }
 
 -- || Type Classes and instances ######################################################################################### | --
@@ -118,7 +119,7 @@ updateLocation (x,y) (HomingPath f1 f2 f3) = undefined
 -- | This works because of the DuplicateRecordFields extension
 data Bullet = Bullet {location :: Point, damagePoints :: Int, image :: Picture, path :: ObjectPath, size :: Int}
   
-data Enemy  = Enemy {location :: Point, health :: Int, image :: Picture, path :: ObjectPath, bullet :: Bullet, shotCooldown :: Int, shotCooldownCounter :: Int, size :: Int } 
+data Enemy  = Enemy {location :: Point, health :: Int, image :: Picture, path :: ObjectPath, bullet :: Bullet, shotCooldown :: Int, shotCooldownCounter :: Int, size :: Int, score :: Int} 
       
 -- | The kinds of paths a bullet or enemy can follow
 data ObjectPath = StraightPath Float      -- Float is x speed
@@ -152,13 +153,13 @@ waveNeedsSpawn Wave{interval = interval, stepCounter = stepCounter} = interval =
 -- || Objects ########################################################################################################### | --
 -- | These are actual objects with values filled in | --
 spawnPattern1 = SpawnPattern [-0.5, 0.0, 0.5]
-testEnemy     = Enemy {health = 1, image = color black (ThickCircle 5.0 5.0), path = StraightPath (-3.0), bullet = testBulletAimed, shotCooldown = 30, shotCooldownCounter = 0, size = 10}
+testEnemy     = Enemy {health = 1, image = color black (ThickCircle 5.0 5.0), path = StraightPath (-3.0), bullet = testBulletAimed, shotCooldown = 30, shotCooldownCounter = 0, size = 10, score = 1}
 testBullet    = Bullet {damagePoints = 1, image = Circle 2.0, path = StraightPath (-5.0), size = 20}
 testBulletAimed = Bullet {damagePoints = 1, image = Circle 2.0, path = AimedPath 5.0 (10.0,1.0), size = 20}
 testPlayer    = Player { health = 10, image = color black (ThickCircle 5.0 10.0),  location = (0.0, 0.0), bullet = testBullet, shotCooldown = 10, size = 10}
 testWave      = Wave {pattern = spawnPattern1, enemies = [testEnemy], interval = 30, enemyCounter = 1, stepCounter = 0, totalEnemies = 5}
 testExplosion = Explosion { scale = 100.0, countdown = 300, velocity = (0.0,0.0)}
-beginState    = GameState { player = testPlayer, pressedKeys = [], enemies = [], friendlyBullets = [], enemyBullets = [], waves = [], explosions = []}
+beginState    = GameState { player = testPlayer, pressedKeys = [], enemies = [], friendlyBullets = [], enemyBullets = [], waves = [], explosions = [], score = 0}
 
 
 -- | Pictures!

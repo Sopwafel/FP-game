@@ -56,7 +56,11 @@ updateEnemyBullets gstate@GameState{enemyBullets = enemyBullets} = gstate {enemy
 
  -- | Moves enemies, updates their shot cooldown and spawns bullets or explosions if necessary
 updateEnemies :: GameState -> GameState
-updateEnemies gstate@GameState{enemies = enemies, enemyBullets = enemyBullets, explosions = explosions, player = Player{location = ploc}} = gstate {enemies = (mapMaybe update enemies), enemyBullets = (spawnBullets enemies enemyBullets ploc), explosions = ((explodeEnemies enemies) ++ explosions)}
+updateEnemies gstate@GameState{enemies = enemies, enemyBullets = enemyBullets, explosions = explosions, player = Player{location = ploc}, score = score} = 
+    gstate {enemies = (mapMaybe update enemies), 
+    enemyBullets = (spawnBullets enemies enemyBullets ploc), 
+    explosions = ((explodeEnemies enemies) ++ explosions),
+    score = score + (scoreEnemies enemies)}
 
  -- | Updates spawn cooldown for waves and spawns enemies if necessary
 updateWaves :: GameState -> GameState
@@ -67,6 +71,12 @@ updateWaves gstate@GameState{enemies = enemies, waves = waves} = gstate {waves =
 -- | Update the list of EXPLOSIONS!!!
 updateEXPLOSIONS :: GameState -> GameState
 updateEXPLOSIONS gstate@GameState{explosions = ex} = gstate {explosions = mapMaybe update ex}
+
+scoreEnemies :: [Enemy] -> Int
+scoreEnemies [] = 0
+scoreEnemies (Enemy{health = h, score = score}:xs)
+    | h < 0 = score + scoreEnemies xs
+    | otherwise = scoreEnemies xs
 
 explodeEnemies :: [Enemy] -> [Explosion]
 explodeEnemies [] = []
