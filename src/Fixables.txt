@@ -4,9 +4,14 @@ Things to add
 	- When player dies
 	- Pause menu
 - Paths
+	V AimedPath
+	- HomingPath
+	- SinoidPath
 - Player health
 - PowerUps
 - Score
+	- Counter in screen
+	- HighScores in file
 - Levels
 - Instances of
 	- Enemies
@@ -21,6 +26,6 @@ Things to add
 
 
 Things to fix
-- Player can go out of screen
+V Player can go out of screen
 - Caps lock breaks input
-- Make screen size not hardcoded
+V Make screen size not hardcoded
