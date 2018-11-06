@@ -42,7 +42,7 @@ drawThings (thing:xs) = (draw thing) : (drawThings xs)
 
 -- || Draw Instances ##################################################################################################### | --
 instance Draw Bullet where
-    draw Bullet {image = img, location = (x,y)} = (translate x y img)
+    draw Bullet {image = img, location = (x,y)} = translate x y img
 instance Draw Enemy where
     draw Enemy {image = img, location = (x,y)}  = (translate x y img)
 instance Draw PowerUp where

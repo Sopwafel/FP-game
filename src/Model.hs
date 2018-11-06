@@ -70,17 +70,21 @@ class Collideable a where
 
 instance Collideable Bullet where
     loc Bullet{location = a} = a
-    hitboxSize Bullet{size = a} = a
+    hitboxSize Bullet{image = i} = imgSize i
 instance Collideable Enemy where
     loc Enemy{location = a} = a
-    hitboxSize Enemy{size = a} = a
+    hitboxSize Enemy{image = i}  = imgSize i
 instance Collideable Player where
     loc Player{location = a} = a
     hitboxSize Player{size = a} = a
 instance Collideable PowerUp where
     loc PowerUp{location = a} = a
     hitboxSize PowerUp{size = a} = a
-    
+
+imgSize :: Picture -> Int
+imgSize (Circle s) = round s
+imgSize (Color _ (ThickCircle a b)) = (round (2*a)) + (round (2*b))
+
 -- | A thing that does damage
 class Damage a where
     damage          :: a -> Int
@@ -101,6 +105,7 @@ instance DamageAble Player where
 
 -- || Functions ######################################################################################################### | --
 -- | Checks if two Collideables collide
+-- | Seems to break for bigger sizes TODO
 collides :: (Collideable a, Collideable b) => a -> b -> Bool
 collides a b = collideHelper (loc a) (loc b) (fromIntegral((hitboxSize a) `div` 2)) (fromIntegral((hitboxSize b) `div` 2))
 collideHelper :: Point -> Point -> Float -> Float -> Bool
@@ -110,6 +115,11 @@ removeIfCollides :: (Collideable a, Collideable b) => a -> b -> Maybe b
 removeIfCollides a b 
     | collides a b = Nothing
     | otherwise = Just b
+
+-- putPowerUpsInBullets :: Bullet -> [PowerUp] -> Bullet
+-- putPowerUpsInBullets bullet powerUps = foldr putPowerUpInBullet bullet powerUps
+
+
 
 -- | Check if an enemy can shoot
 enemyCanShoot :: Enemy -> Bool
@@ -157,7 +167,7 @@ updatePathHelper (AimedPath _ (ax, ay)) (HomingPath v (hx, hy) turningRate) = Ho
 -- || Game Objects  ##################################################################################################### | --
 
 -- | This works because of the DuplicateRecordFields extension
-data Bullet = Bullet {location :: Point, damagePoints :: Int, image :: Picture, path :: ObjectPath, size :: Int}
+data Bullet = Bullet {location :: Point, damagePoints :: Int, image :: Picture, path :: ObjectPath}
   
 data Enemy  = Enemy {location :: Point, health :: Int, image :: Picture, path :: ObjectPath, bullet :: Bullet, shotCooldown :: Int, shotCooldownCounter :: Int, size :: Int, score :: Int} 
       
@@ -167,15 +177,31 @@ data ObjectPath = StraightPath Float      -- Float is x speed
     | HomingPath  Float Point Float       -- First Float is x speed, second y speed, third has range 0..1 and is turning rate
     | SinoidPath  Float                   -- First Float is speed, second is magnitude (a in f(x) = a*sin(x))
 
+
+
 data Player = Player { image :: Picture, location :: Point, bullet :: Bullet, shotCooldown :: Int, size :: Int, health :: Int, powerUps :: [PowerUp]}
 
-powerUp :: Player -> PowerUp -> Player
-powerUp pl@Player{powerUps = pups} pup = pl {powerUps = pup : pups}
-
-data Explosion = Explosion {location :: Point, scale :: Float, countdown :: Int, velocity :: Point}
+-- || PowerUps ########################################################################################################### | --
 
 data PowerUp = PowerUp {location :: Point, powerUpType :: PowerUpType, path :: ObjectPath, size :: Int, image :: Picture, pickedUp :: Bool}
 data PowerUpType = BulletSize | BulletSpeed | BulletDamage
+
+powerUp :: Player -> PowerUp -> Player
+powerUp pl@Player{powerUps = pups, bullet = b} pup = pl {powerUps = pup : pups, bullet = (putPowerUpInBullet b pup)}
+
+putPowerUpInBullet :: Bullet -> PowerUp -> Bullet
+putPowerUpInBullet b@Bullet{path = p} PowerUp{powerUpType = BulletSpeed} = b{path = increasePathSpeed p}
+putPowerUpInBullet b@Bullet{image = img} PowerUp{powerUpType = BulletSize} = b{image = increaseImageSize img}
+
+increasePathSpeed :: ObjectPath -> ObjectPath
+increasePathSpeed (StraightPath v) = StraightPath (v+5)
+
+increaseImageSize :: Picture -> Picture 
+increaseImageSize (Circle f) = Circle (f + 1.0)
+
+data Explosion = Explosion {location :: Point, scale :: Float, countdown :: Int, velocity :: Point}
+
+
 
 -- || Wave logic ######################################################################################################## | --
 
@@ -198,9 +224,9 @@ waveNeedsSpawn Wave{interval = interval, stepCounter = stepCounter} = interval =
 -- || Objects ########################################################################################################### | --
 -- | These are actual objects with values filled in | --
 spawnPattern1 = SpawnPattern [-0.5, 0.0, 0.5]
-testEnemy     = Enemy {health = 1, image = color black (ThickCircle 5.0 5.0), path = StraightPath (-3.0), bullet = testBulletAimed, shotCooldown = 30, shotCooldownCounter = 0, size = 10, score = 1}
-testBullet    = Bullet {damagePoints = 1, image = Circle 2.0, path = StraightPath (-5.0), size = 20}
-testBulletAimed = Bullet {damagePoints = 1, image = Circle 2.0, path = AimedPath 5.0 (10.0,1.0), size = 20}
+testEnemy     = Enemy {health = 1, image = color black (ThickCircle 5.0 5.0), path = StraightPath (-3.0), bullet = testBulletAimed, shotCooldown = 30, shotCooldownCounter = 0, score = 1}
+testBullet    = Bullet {damagePoints = 1, image = Circle 2.0, path = StraightPath (-5.0)}
+testBulletAimed = Bullet {damagePoints = 1, image = Circle 2.0, path = AimedPath 5.0 (10.0,1.0)}
 testPlayer    = Player { health = 10, image = color black (ThickCircle 5.0 10.0),  location = (0.0, 0.0), bullet = testBullet, shotCooldown = 10, size = 10}
 testWave      = Wave {pattern = spawnPattern1, enemies = [testEnemy], interval = 30, enemyCounter = 1, stepCounter = 0, totalEnemies = 5}
 testExplosion = Explosion { scale = 100.0, countdown = 300, velocity = (0.0,0.0)}

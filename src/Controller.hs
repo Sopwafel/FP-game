@@ -68,7 +68,6 @@ powerUpPlayer (x:xs) a
     | otherwise = powerUpPlayer xs a
 
 
-
 -- || Update gamestate fields ########################################################################################### | --
 
 updatePowerUps :: GameState -> GameState
@@ -105,10 +104,6 @@ scoreEnemies (Enemy{health = h, score = score}:xs)
     | h < 0 = score + scoreEnemies xs
     | otherwise = scoreEnemies xs
 
-
-    
-
-    
 -- || Spawn stuff ######################################################################################################## | --
 
 -- | Puts all enemies that should be spawned by [Wave] this step in [Enemy]
@@ -176,7 +171,7 @@ keyBeingPressed key gstate@GameState{player = pl@Player{location   = (x,y), bull
 
 -- | Spawns a player bullet every step it is called
 addPlayerBullet :: GameState -> GameState
-addPlayerBullet gstate@GameState{player = pl@Player{location = (x,y), bullet = pBullet}, friendlyBullets = friendBullets} = 
+addPlayerBullet gstate@GameState{player = pl@Player{location = (x,y), bullet = pBullet, powerUps = powerUps}, friendlyBullets = friendBullets} = 
     gstate {friendlyBullets = (newBullet : friendBullets)}
     where
         newBullet = pBullet {location = (x,y)} :: Bullet
