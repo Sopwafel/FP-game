@@ -106,6 +106,11 @@ collides a b = collideHelper (loc a) (loc b) (fromIntegral((hitboxSize a) `div` 
 collideHelper :: Point -> Point -> Float -> Float -> Bool
 collideHelper (x,y) (x2,y2) s1 s2 = x < (x2+s2) && (x+s1) > x2 && y < (y2+s2) && (y+s1) > y2
 
+removeIfCollides :: (Collideable a, Collideable b) => a -> b -> Maybe b
+removeIfCollides a b 
+    | collides a b = Nothing
+    | otherwise = Just b
+
 -- | Check if an enemy can shoot
 enemyCanShoot :: Enemy -> Bool
 enemyCanShoot Enemy{shotCooldown = shotCooldown, shotCooldownCounter = shotCooldownCounter} = shotCooldown == shotCooldownCounter
@@ -162,7 +167,10 @@ data ObjectPath = StraightPath Float      -- Float is x speed
     | HomingPath  Float Point Float       -- First Float is x speed, second y speed, third has range 0..1 and is turning rate
     | SinoidPath  Float                   -- First Float is speed, second is magnitude (a in f(x) = a*sin(x))
 
-data Player = Player { image :: Picture, location :: Point, bullet :: Bullet, shotCooldown :: Int, size :: Int, health :: Int}
+data Player = Player { image :: Picture, location :: Point, bullet :: Bullet, shotCooldown :: Int, size :: Int, health :: Int, powerUps :: [PowerUp]}
+
+powerUp :: Player -> PowerUp -> Player
+powerUp pl@Player{powerUps = pups} pup = pl {powerUps = pup : pups}
 
 data Explosion = Explosion {location :: Point, scale :: Float, countdown :: Int, velocity :: Point}
 

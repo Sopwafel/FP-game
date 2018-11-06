@@ -26,15 +26,17 @@ updateFields gstate = updatePowerUps(updateEXPLOSIONS (updateEnemyBullets (updat
 -- || Collision checks ################################################################################################## | --
 -- | Checks enemy collision with player bullets and player collision with enemy bullets
 checkCollisions :: GameState -> GameState
-checkCollisions gstate = enemyCollision (playerCollision gstate)
+checkCollisions gstate = collidePowerUpsWithPlayer (enemyCollision (playerCollision gstate))
 
 -- | Check if the player gets hit by a bullet
 playerCollision :: GameState -> GameState
-playerCollision gstate@GameState{player = player, enemyBullets = bullets} = gstate{player = (collideBulletsWithObject bullets player)}
+playerCollision gstate@GameState{player = player, enemyBullets = bullets} = gstate{player = (collideBulletsWithObject bullets player), enemyBullets = (removeCollidedBullets bullets player)}
 
 -- | Check if enemies get hit by bullets
 enemyCollision :: GameState -> GameState
-enemyCollision gstate@GameState{enemies = enemies, friendlyBullets = bullets} = gstate{enemies = (map (collideBulletsWithObject bullets) enemies)}
+enemyCollision gstate@GameState{enemies = enemies, friendlyBullets = bullets} = gstate{enemies = (map (collideBulletsWithObject bullets) enemies), friendlyBullets = newFriendlyBullets}
+    where
+        newFriendlyBullets = removeCollidedBulletsList bullets enemies    
 
 collideBulletsWithObject :: (Collideable a, DamageAble a) => [Bullet] -> a -> a
 collideBulletsWithObject [] a = a
@@ -42,7 +44,30 @@ collideBulletsWithObject (x:xs) a
     | collides a x = collideBulletsWithObject xs (doDamage a x)
     | otherwise = collideBulletsWithObject xs a
 
---collidePowerUpsWithPlayer :: Player -> [PowerUp] -> Player
+removeCollidedBulletsList :: (Collideable a, DamageAble a) => [Bullet] -> [a] -> [Bullet]
+removeCollidedBulletsList bullets [] = bullets
+removeCollidedBulletsList bullets (x:xs) = removeCollidedBulletsList (removeCollidedBullets bullets x) xs
+
+removeCollidedBullets :: (Collideable a, DamageAble a) => [Bullet] -> a -> [Bullet]
+removeCollidedBullets [] _ = []
+removeCollidedBullets (x:xs) a
+    | collides a x = removeCollidedBullets xs a
+    | otherwise = x : removeCollidedBullets xs a
+
+-- | Powers up the player and removes collected powerUps
+collidePowerUpsWithPlayer :: GameState -> GameState
+collidePowerUpsWithPlayer gstate@GameState{player = player, powerUps = gamePowerUps} = gstate{player = newPlayer, powerUps = updatedGamePowerUpList}
+    where 
+        updatedGamePowerUpList = mapMaybe (removeIfCollides player) gamePowerUps
+        newPlayer = powerUpPlayer gamePowerUps player 
+
+powerUpPlayer :: [PowerUp] -> Player -> Player
+powerUpPlayer [] a = a
+powerUpPlayer (x:xs) a
+    | collides a x = powerUpPlayer xs (powerUp a x)
+    | otherwise = powerUpPlayer xs a
+
+
 
 -- || Update gamestate fields ########################################################################################### | --
 
@@ -79,6 +104,10 @@ scoreEnemies [] = 0
 scoreEnemies (Enemy{health = h, score = score}:xs)
     | h < 0 = score + scoreEnemies xs
     | otherwise = scoreEnemies xs
+
+
+    
+
     
 -- || Spawn stuff ######################################################################################################## | --
 
