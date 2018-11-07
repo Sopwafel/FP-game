@@ -10,18 +10,22 @@ import Graphics.Gloss.Interface.IO.Game
 
 
 -- | This object contains all gameObjects. Is changed every tick by Controller, and drawn every tick by View
-data GameState = GameState {
+data GameState = PlayingState {
                    player          :: Player
                  , pressedKeys     :: [Key]       -- All keys that are currently pressed down.
                  , enemies         :: [Enemy]     -- All enemies. TODO: Move every step, check for collission with player, make shoot
                  , friendlyBullets :: [Bullet]    -- All friendly bullets. Get moved every step. TODO: Check for collission with enemies
                  , enemyBullets    :: [Bullet]    -- All enemy bullets. Get moved every step. TODO: check collission with player
                  , waves           :: [Wave]      -- Every step, all waves are evaluated and updated. If necessary, an enemy is spawned from them.
-				 , explosions      :: [Explosion] -- All EXPLOSIONS currently in the game.
+                 , explosions      :: [Explosion] -- All EXPLOSIONS currently in the game.
 				 , screensize      :: Point       -- Size of the widow
                  , score           :: Int
                  , powerUps        :: [PowerUp]
                  }
+                | Menustate {
+		           screensize :: Point
+                 , buttons    :: [Button]
+		         }
 
 -- || Type Classes and instances ######################################################################################### | --
 -- | Returns a picture of a drawable object
@@ -36,26 +40,26 @@ class Update a where
     update          :: GameState -> a -> Maybe a
 
 instance Update Bullet where
-    update GameState{screensize = screensize, player = Player{location = playerLocation}} bullet@Bullet{location = location, path = path}  
+    update PlayingState{screensize = screensize, player = Player{location = playerLocation}} bullet@Bullet{location = location, path = path}  
         | outOfScreen location screensize = Nothing
         | otherwise = Just (bullet {location = (updateLocation location path), path = path} :: Bullet)   
 instance Update Enemy where
-    update  GameState{screensize = screensize, player = Player{location = playerLocation}} enemy@Enemy{location   = (x,y), path = StraightPath v, shotCooldownCounter = shotCooldownCounter, shotCooldown = shotCooldown, health = h}
+    update  PlayingState{screensize = screensize, player = Player{location = playerLocation}} enemy@Enemy{location   = (x,y), path = StraightPath v, shotCooldownCounter = shotCooldownCounter, shotCooldown = shotCooldown, health = h}
         | outOfScreen (x,y) screensize = Nothing
         | h < 0 = Nothing
         | shotCooldownCounter < shotCooldown = Just enemy  {location = (x+v, y), shotCooldownCounter = shotCooldownCounter +1} :: Maybe Enemy
         | otherwise = Just enemy  {location = (x+v, y), shotCooldownCounter = 0} :: Maybe Enemy
 instance Update Explosion where
-    update  GameState{screensize = screensize, player = Player{location = playerLocation}} boom@Explosion{countdown = count, location = (x, y), velocity = (x2, y2)}
+    update  PlayingState{screensize = screensize, player = Player{location = playerLocation}} boom@Explosion{countdown = count, location = (x, y), velocity = (x2, y2)}
         | count > 0 = Just boom {countdown = count - 1, location = ((x + x2), (y + y2))}
         | otherwise = Nothing
 instance Update Wave where
-    update GameState{screensize = screensize, player = Player{location = playerLocation}} wave@Wave{stepCounter = stepCounter, interval = interval, totalEnemies = totalEnemies, enemyCounter = enemyCounter}
+    update PlayingState{screensize = screensize, player = Player{location = playerLocation}} wave@Wave{stepCounter = stepCounter, interval = interval, totalEnemies = totalEnemies, enemyCounter = enemyCounter}
         | totalEnemies == enemyCounter = Nothing
         | interval == stepCounter = Just wave {stepCounter = 0, enemyCounter = enemyCounter +1}
         | otherwise = Just wave {stepCounter = stepCounter + 1}
 instance Update PowerUp where
-    update GameState{screensize = screensize, player = Player{location = playerLocation}} p@PowerUp{location = location, path = path} 
+    update PlayingState{screensize = screensize, player = Player{location = playerLocation}} p@PowerUp{location = location, path = path} 
         | outOfScreen location screensize = Nothing
         | otherwise = Just (p {location = (updateLocation location path)} :: PowerUp)   
 
@@ -221,17 +225,20 @@ nextEnemy Wave{enemyCounter = n, enemies = enemies, pattern = (SpawnPattern np)}
 waveNeedsSpawn :: Wave -> Bool
 waveNeedsSpawn Wave{interval = interval, stepCounter = stepCounter} = interval == stepCounter
 
+-- || Menu data ######################################################################################################### | --
+data Button = Button {location :: Point, size :: Point, text :: String, switchto :: GameState}
+
 -- || Objects ########################################################################################################### | --
 -- | These are actual objects with values filled in | --
-spawnPattern1 = SpawnPattern [-0.5, 0.0, 0.5]
-testEnemy     = Enemy {health = 1, image = color black (ThickCircle 5.0 5.0), path = StraightPath (-3.0), bullet = testBulletAimed, shotCooldown = 30, shotCooldownCounter = 0, score = 1}
-testBullet    = Bullet {damagePoints = 1, image = Circle 2.0, path = StraightPath (-5.0)}
+spawnPattern1   = SpawnPattern [-0.5, 0.0, 0.5]
+testEnemy       = Enemy {health = 1, image = color black (ThickCircle 5.0 5.0), path = StraightPath (-3.0), bullet = testBulletAimed, shotCooldown = 30, shotCooldownCounter = 0, score = 1}
+testBullet      = Bullet {damagePoints = 1, image = Circle 2.0, path = StraightPath (-5.0)}
 testBulletAimed = Bullet {damagePoints = 1, image = Circle 2.0, path = AimedPath 5.0 (10.0,1.0)}
-testPlayer    = Player { health = 10, image = color black (ThickCircle 5.0 10.0),  location = (0.0, 0.0), bullet = testBullet, shotCooldown = 10, size = 10}
-testWave      = Wave {pattern = spawnPattern1, enemies = [testEnemy], interval = 30, enemyCounter = 1, stepCounter = 0, totalEnemies = 5}
-testExplosion = Explosion { scale = 100.0, countdown = 300, velocity = (0.0,0.0)}
-testPowerUp   = PowerUp {location = (799.0, 0), path = StraightPath (5.0), size = 30, powerUpType = BulletSize, image = square, pickedUp = False}
-beginState    = GameState { player = testPlayer, pressedKeys = [], enemies = [], friendlyBullets = [], enemyBullets = [], waves = [], explosions = [], score = 0, powerUps = []}
+testPlayer      = Player { health = 10, image = color black (ThickCircle 5.0 10.0),  location = (0.0, 0.0), bullet = testBullet, shotCooldown = 10, size = 10}
+testWave        = Wave {pattern = spawnPattern1, enemies = [testEnemy], interval = 30, enemyCounter = 1, stepCounter = 0, totalEnemies = 5}
+testExplosion   = Explosion { scale = 100.0, countdown = 300, velocity = (0.0,0.0)}
+testPowerUp     = PowerUp {location = (799.0, 0), path = StraightPath (5.0), size = 30, powerUpType = BulletSize, image = square, pickedUp = False}
+beginState      = PlayingState{ player = testPlayer, pressedKeys = [], enemies = [], friendlyBullets = [], enemyBullets = [], waves = [], explosions = [], score = 0, powerUps = []}
 
 
 -- | Pictures!

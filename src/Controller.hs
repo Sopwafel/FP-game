@@ -30,11 +30,11 @@ checkCollisions gstate = collidePowerUpsWithPlayer (enemyCollision (playerCollis
 
 -- | Check if the player gets hit by a bullet
 playerCollision :: GameState -> GameState
-playerCollision gstate@GameState{player = player, enemyBullets = bullets} = gstate{player = (collideBulletsWithObject bullets player), enemyBullets = (removeCollidedBullets bullets player)}
+playerCollision gstate@PlayingState{player = player, enemyBullets = bullets} = gstate{player = (collideBulletsWithObject bullets player), enemyBullets = (removeCollidedBullets bullets player)}
 
 -- | Check if enemies get hit by bullets
 enemyCollision :: GameState -> GameState
-enemyCollision gstate@GameState{enemies = enemies, friendlyBullets = bullets} = gstate{enemies = (map (collideBulletsWithObject bullets) enemies), friendlyBullets = newFriendlyBullets}
+enemyCollision gstate@PlayingState{enemies = enemies, friendlyBullets = bullets} = gstate{enemies = (map (collideBulletsWithObject bullets) enemies), friendlyBullets = newFriendlyBullets}
     where
         newFriendlyBullets = removeCollidedBulletsList bullets enemies    
 
@@ -56,7 +56,7 @@ removeCollidedBullets (x:xs) a
 
 -- | Powers up the player and removes collected powerUps
 collidePowerUpsWithPlayer :: GameState -> GameState
-collidePowerUpsWithPlayer gstate@GameState{player = player, powerUps = gamePowerUps} = gstate{player = newPlayer, powerUps = updatedGamePowerUpList}
+collidePowerUpsWithPlayer gstate@PlayingState{player = player, powerUps = gamePowerUps} = gstate{player = newPlayer, powerUps = updatedGamePowerUpList}
     where 
         updatedGamePowerUpList = mapMaybe (removeIfCollides player) gamePowerUps
         newPlayer = powerUpPlayer gamePowerUps player 
@@ -71,17 +71,17 @@ powerUpPlayer (x:xs) a
 -- || Update gamestate fields ########################################################################################### | --
 
 updatePowerUps :: GameState -> GameState
-updatePowerUps gstate@GameState{powerUps = powerUps} = gstate {powerUps = (mapMaybe (update gstate) powerUps)}
+updatePowerUps gstate@PlayingState{powerUps = powerUps} = gstate {powerUps = (mapMaybe (update gstate) powerUps)}
 
 updatePlayerBullets :: GameState -> GameState
-updatePlayerBullets gstate@GameState{friendlyBullets = pBullets} = gstate {friendlyBullets = (mapMaybe (update gstate) pBullets)}
+updatePlayerBullets gstate@PlayingState{friendlyBullets = pBullets} = gstate {friendlyBullets = (mapMaybe (update gstate) pBullets)}
 
 updateEnemyBullets :: GameState -> GameState
-updateEnemyBullets gstate@GameState{enemyBullets = enemyBullets} = gstate {enemyBullets = (mapMaybe (update gstate) enemyBullets)}
+updateEnemyBullets gstate@PlayingState{enemyBullets = enemyBullets} = gstate {enemyBullets = (mapMaybe (update gstate) enemyBullets)}
 
  -- | Moves enemies, updates their shot cooldown and spawns bullets or explosions if necessary
 updateEnemies :: GameState -> GameState
-updateEnemies gstate@GameState{enemies = enemies, enemyBullets = enemyBullets, explosions = explosions, player = Player{location = ploc}, score = score, screensize = screensize} = 
+updateEnemies gstate@PlayingState{enemies = enemies, enemyBullets = enemyBullets, explosions = explosions, player = Player{location = ploc}, score = score, screensize = screensize} = 
     gstate {enemies = (mapMaybe (update gstate) enemies), 
     enemyBullets = (spawnBullets enemies enemyBullets ploc), 
     explosions = ((explodeEnemies enemies) ++ explosions),
@@ -89,13 +89,13 @@ updateEnemies gstate@GameState{enemies = enemies, enemyBullets = enemyBullets, e
 
  -- | Updates spawn cooldown for waves and spawns enemies if necessary
 updateWaves :: GameState -> GameState
-updateWaves gstate@GameState{enemies = enemies, waves = waves, screensize = screensize} = gstate {waves = newWaves, enemies = (spawnEnemies newWaves enemies)}
+updateWaves gstate@PlayingState{enemies = enemies, waves = waves, screensize = screensize} = gstate {waves = newWaves, enemies = (spawnEnemies newWaves enemies)}
     where
         newWaves = (mapMaybe (update gstate) waves)
         
 -- | Update the list of EXPLOSIONS!!!
 updateEXPLOSIONS :: GameState -> GameState
-updateEXPLOSIONS gstate@GameState{explosions = ex} = gstate {explosions = mapMaybe (update gstate) ex }
+updateEXPLOSIONS gstate@PlayingState{explosions = ex} = gstate {explosions = mapMaybe (update gstate) ex }
 
 -- | Enemies that are damaged to below 0 hp stay in the list for one step, and in this time they can be scored
 scoreEnemies :: [Enemy] -> Int
@@ -137,7 +137,7 @@ input e gstate = return (inputKey e gstate)
 -- | TODO: make these functions only add a Key to the pressedKey field
 -- | Because currently we only move on keyPress and keyUp events, not while the key is being held
 inputKey :: Event -> GameState -> GameState
-inputKey (EventKey key keyState _ _) gstate@GameState{player = p, pressedKeys = list, waves = waves, powerUps = powerUps}
+inputKey (EventKey key keyState _ _) gstate@PlayingState{player = p, pressedKeys = list, waves = waves, powerUps = powerUps}
     | keyState == Down && key == (Char 's') =  gstate{waves = testWave : waves}     -- Spawn testwave
     | keyState == Down && key == (Char 'p') =  gstate{powerUps = testPowerUp : powerUps}
     | keyState == Down   = gstate {pressedKeys = newlist}
@@ -152,16 +152,16 @@ inputKey _ gstate = gstate -- Otherwise keep the same
 
 -- | Acts out all keys that are currently pressed
 doPressedKeys :: GameState -> GameState
-doPressedKeys gstate@GameState{pressedKeys = keyList} = foldr keyBeingPressed gstate keyList 
+doPressedKeys gstate@PlayingState{pressedKeys = keyList} = foldr keyBeingPressed gstate keyList 
 
 -- | I was thinking we could map this function over the keyPressed array
 -- | And change the gamestate for each key that's being held
 keyBeingPressed :: Key -> GameState -> GameState
-keyBeingPressed key gstate@GameState{player = pl@Player{location   = (x,y), bullet = pBullet}, screensize = (width, height)}
-    | x >= (width/2)   && key == (SpecialKey KeyRight) = gstate
-    | x <= -(width/2)  && key == (SpecialKey KeyLeft)  = gstate
-    | y >= (height/2)  && key == (SpecialKey KeyUp)    = gstate
-    | y <= -(height/2) && key == (SpecialKey KeyDown)  = gstate
+keyBeingPressed key gstate@PlayingState{player = pl@Player{location   = (x,y), bullet = pBullet, size = sz}, screensize = (width, height)}
+    | x >= (width/2 - (fromIntegral sz))   && key == (SpecialKey KeyRight) = gstate
+    | x <= -(width/2 - (fromIntegral sz))  && key == (SpecialKey KeyLeft)  = gstate
+    | y >= (height/2 - (fromIntegral sz))  && key == (SpecialKey KeyUp)    = gstate
+    | y <= -(height/2 - (fromIntegral sz)) && key == (SpecialKey KeyDown)  = gstate
     | key == (SpecialKey KeyUp)    = gstate {player = pl {location = (x,(y+stepSize))}}
     | key == (SpecialKey KeyDown)  = gstate {player = pl {location = (x,(y-stepSize))}}
     | key == (SpecialKey KeyRight) = gstate {player = pl {location = ((x+stepSize),y)}}
@@ -171,7 +171,7 @@ keyBeingPressed key gstate@GameState{player = pl@Player{location   = (x,y), bull
 
 -- | Spawns a player bullet every step it is called
 addPlayerBullet :: GameState -> GameState
-addPlayerBullet gstate@GameState{player = pl@Player{location = (x,y), bullet = pBullet, powerUps = powerUps}, friendlyBullets = friendBullets} = 
+addPlayerBullet gstate@PlayingState{player = pl@Player{location = (x,y), bullet = pBullet, powerUps = powerUps}, friendlyBullets = friendBullets} = 
     gstate {friendlyBullets = (newBullet : friendBullets)}
     where
         newBullet = pBullet {location = (x,y)} :: Bullet
