@@ -18,6 +18,8 @@ view = return . viewPure
 -- | Pictures[picture1, picture2, picture3]
 -- | This itself is a Picture, so we can return it from viewPure
 viewPure :: GameState -> Picture
+viewPure MenuState {buttons = buttons}
+    = Pictures (drawThings buttons)
 viewPure PlayingState {player =Player {image = img, location = (x,y) , health = health}, friendlyBullets = pBullets, enemyBullets = enemyBullets, enemies = enemies,powerUps = powerUps, explosions = explosions, score = score} 
     = Pictures ((translate x y img) : (drawScore score) : (drawThings pBullets) ++ (drawThings enemyBullets) ++ (drawThings explosions) ++ (drawThings enemies) ++ (drawThings powerUps))
             -- Player picture         Bullets
@@ -41,6 +43,8 @@ drawThings (thing:xs) = (draw thing) : (drawThings xs)
 
 
 -- || Draw Instances ##################################################################################################### | --
+instance Draw Button where 
+    draw Button {location = (x, y), size = (width, height), text = text} = translate x y (color blue (Polygon [(width/2, height/2), (-width/2, height/2), (-width/2, -height/2), (width/2, -height/2)]))
 instance Draw Bullet where
     draw Bullet {image = img, location = (x,y)} = translate x y img
 instance Draw Enemy where

@@ -18,7 +18,8 @@ stepSize = 5
 
 -- | Updates the gamestate
 step :: Float -> GameState -> IO GameState
-step secs gstate = return (checkCollisions (updateFields (doPressedKeys gstate)))
+step secs (gstate@PlayingState{}) = return (checkCollisions (updateFields (doPressedKeys gstate)))
+step secs (gstate@MenuState{})    = return (doPressedKeys gstate)
 
 updateFields :: GameState -> GameState
 updateFields gstate = updatePowerUps(updateEXPLOSIONS (updateEnemyBullets (updateEnemies (updatePlayerBullets (updateWaves gstate)))))
@@ -147,17 +148,25 @@ inputKey (EventKey key keyState _ _) gstate@PlayingState{player = p, pressedKeys
         newlist    = key : list
         filterlist = filter ((/=) key) list
     --gstate { infoToShow = ShowAChar c }
+inputKey (EventKey key keyState _ _) gstate@MenuState{pressedKeys = list}
+    | keyState == Down   = gstate {pressedKeys = newlist}
+    | keyState == Up     = gstate {pressedKeys = filterlist}
+    | otherwise = gstate
+    where
+        newlist    = key : list
+        filterlist = filter ((/=) key) list
 inputKey _ gstate = gstate -- Otherwise keep the same
 
 
 -- | Acts out all keys that are currently pressed
 doPressedKeys :: GameState -> GameState
 doPressedKeys gstate@PlayingState{pressedKeys = keyList} = foldr keyBeingPressed gstate keyList 
+doPressedKeys gstate@MenuState{pressedKeys = keyList}    = foldr keyBeingPressed gstate keyList
 
 -- | I was thinking we could map this function over the keyPressed array
 -- | And change the gamestate for each key that's being held
 keyBeingPressed :: Key -> GameState -> GameState
-keyBeingPressed key gstate@PlayingState{player = pl@Player{location   = (x,y), bullet = pBullet, size = sz}, screensize = (width, height)}
+keyBeingPressed key gstate@PlayingState{player = pl@Player{location   = (x,y), size = sz}, screensize = (width, height)}
     | x >= (width/2 - (fromIntegral sz))   && key == (SpecialKey KeyRight) = gstate
     | x <= -(width/2 - (fromIntegral sz))  && key == (SpecialKey KeyLeft)  = gstate
     | y >= (height/2 - (fromIntegral sz))  && key == (SpecialKey KeyUp)    = gstate
@@ -168,6 +177,12 @@ keyBeingPressed key gstate@PlayingState{player = pl@Player{location   = (x,y), b
     | key == (SpecialKey KeyLeft)  = gstate {player = pl {location = ((x-stepSize),y)}}
     | key == (Char 'a')            = addPlayerBullet gstate
     | otherwise = gstate
+keyBeingPressed key gstate@MenuState{buttons = buttons} = checkButton key buttons gstate
+
+checkButton :: Key -> [Button] -> GameState -> GameState
+checkButton key (x@Button{key = thing, switchto = next} : xs) gstate
+    | key == thing = next
+    | otherwise    = gstate
 
 -- | Spawns a player bullet every step it is called
 addPlayerBullet :: GameState -> GameState

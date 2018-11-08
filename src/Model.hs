@@ -7,7 +7,7 @@ module Model where
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
 
-
+screenSize = (1600.0, 900.0)
 
 -- | This object contains all gameObjects. Is changed every tick by Controller, and drawn every tick by View
 data GameState = PlayingState {
@@ -22,9 +22,10 @@ data GameState = PlayingState {
                  , score           :: Int
                  , powerUps        :: [PowerUp]
                  }
-                | Menustate {
-		           screensize :: Point
-                 , buttons    :: [Button]
+                | MenuState {
+		           screensize  :: Point
+                 , buttons     :: [Button]
+				 , pressedKeys :: [Key]
 		         }
 
 -- || Type Classes and instances ######################################################################################### | --
@@ -210,7 +211,7 @@ data Explosion = Explosion {location :: Point, scale :: Float, countdown :: Int,
 -- || Wave logic ######################################################################################################## | --
 
 -- | stepCounter gets +1 every step, and once counter == interval, the next enemy is spawned. 
-data Wave = Wave{pattern :: SpawnPattern, enemies :: [Enemy], interval :: Int, enemyCounter :: Int, stepCounter :: Int, totalEnemies :: Int }
+data Wave = Wave{pattern :: SpawnPattern, enemies :: [Enemy], interval :: Int, enemyCounter :: Int, stepCounter :: Int, totalEnemies :: Int, key :: SpecialKey}
    
 -- | Should be in -1..1 range. Spawns n enemies on 1/points of the screen height at the right of the screen 
 data SpawnPattern = SpawnPattern [Float]
@@ -226,7 +227,7 @@ waveNeedsSpawn :: Wave -> Bool
 waveNeedsSpawn Wave{interval = interval, stepCounter = stepCounter} = interval == stepCounter
 
 -- || Menu data ######################################################################################################### | --
-data Button = Button {location :: Point, size :: Point, text :: String, switchto :: GameState}
+data Button = Button {location :: Point, size :: Point, text :: String, switchto :: GameState, key :: Key}
 
 -- || Objects ########################################################################################################### | --
 -- | These are actual objects with values filled in | --
@@ -238,7 +239,9 @@ testPlayer      = Player { health = 10, image = color black (ThickCircle 5.0 10.
 testWave        = Wave {pattern = spawnPattern1, enemies = [testEnemy], interval = 30, enemyCounter = 1, stepCounter = 0, totalEnemies = 5}
 testExplosion   = Explosion { scale = 100.0, countdown = 300, velocity = (0.0,0.0)}
 testPowerUp     = PowerUp {location = (799.0, 0), path = StraightPath (5.0), size = 30, powerUpType = BulletSize, image = square, pickedUp = False}
-beginState      = PlayingState{ player = testPlayer, pressedKeys = [], enemies = [], friendlyBullets = [], enemyBullets = [], waves = [], explosions = [], score = 0, powerUps = []}
+testButton      = Button {location = (0.0, 0.0), size = (500, 100), text = "Press S to play", switchto = playingState, key = Char 's'}
+beginState      = MenuState {buttons = [testButton], pressedKeys = [], screensize = screenSize}
+playingState    = PlayingState{player = testPlayer, pressedKeys = [], enemies = [], friendlyBullets = [], enemyBullets = [], waves = [], explosions = [], score = 0, powerUps = [], screensize = screenSize}
 
 
 -- | Pictures!
