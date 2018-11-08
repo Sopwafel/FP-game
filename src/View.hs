@@ -44,7 +44,7 @@ drawThings (thing:xs) = (draw thing) : (drawThings xs)
 
 -- || Draw Instances ##################################################################################################### | --
 instance Draw Button where 
-    draw Button {location = (x, y), size = (width, height), text = text} = translate x y (color blue (Polygon [(width/2, height/2), (-width/2, height/2), (-width/2, -height/2), (width/2, -height/2)]))
+    draw Button {location = (x, y), size = (width, height), text = text} = translate x y (Pictures (color blue (Polygon [(0, height), (width, height), (width, -height/2), (0, -height/2)]) : [Scale 0.5 0.5 (Text text)]))
 instance Draw Bullet where
     draw Bullet {image = img, location = (x,y)} = translate x y img
 instance Draw Enemy where

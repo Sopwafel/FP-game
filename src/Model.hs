@@ -239,7 +239,7 @@ testPlayer      = Player { health = 10, image = color black (ThickCircle 5.0 10.
 testWave        = Wave {pattern = spawnPattern1, enemies = [testEnemy], interval = 30, enemyCounter = 1, stepCounter = 0, totalEnemies = 5}
 testExplosion   = Explosion { scale = 100.0, countdown = 300, velocity = (0.0,0.0)}
 testPowerUp     = PowerUp {location = (799.0, 0), path = StraightPath (5.0), size = 30, powerUpType = BulletSize, image = square, pickedUp = False}
-testButton      = Button {location = (0.0, 0.0), size = (500, 100), text = "Press S to play", switchto = playingState, key = Char 's'}
+testButton      = Button {location = (-225, 0), size = (550, 100), text = "Press S to play", switchto = playingState, key = Char 's'}
 beginState      = MenuState {buttons = [testButton], pressedKeys = [], screensize = screenSize}
 playingState    = PlayingState{player = testPlayer, pressedKeys = [], enemies = [], friendlyBullets = [], enemyBullets = [], waves = [], explosions = [], score = 0, powerUps = [], screensize = screenSize}
 
