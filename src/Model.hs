@@ -26,7 +26,14 @@ data GameState = PlayingState {
 		           screensize  :: Point
                  , buttons     :: [Button]
 				 , pressedKeys :: [Key]
+				 , text        :: [OnScreenText]
 		         }
+				| PausedState {
+				   unpause     :: Key
+				 , gameState   :: GameState
+				 , text        :: [OnScreenText]
+				 , pressedKeys :: [Key]
+				 }
 
 -- || Type Classes and instances ######################################################################################### | --
 -- | Returns a picture of a drawable object
@@ -229,6 +236,8 @@ waveNeedsSpawn Wave{interval = interval, stepCounter = stepCounter} = interval =
 -- || Menu data ######################################################################################################### | --
 data Button = Button {location :: Point, size :: Point, text :: String, switchto :: GameState, key :: Key}
 
+data OnScreenText = OnScreenText {location :: Point, scale :: Float, text :: String}
+
 -- || Objects ########################################################################################################### | --
 -- | These are actual objects with values filled in | --
 spawnPattern1   = SpawnPattern [-0.5, 0.0, 0.5]
@@ -240,7 +249,8 @@ testWave        = Wave {pattern = spawnPattern1, enemies = [testEnemy], interval
 testExplosion   = Explosion { scale = 100.0, countdown = 300, velocity = (0.0,0.0)}
 testPowerUp     = PowerUp {location = (799.0, 0), path = StraightPath (5.0), size = 30, powerUpType = BulletSize, image = square, pickedUp = False}
 testButton      = Button {location = (-225, 0), size = (550, 100), text = "Press S to play", switchto = playingState, key = Char 's'}
-beginState      = MenuState {buttons = [testButton], pressedKeys = [], screensize = screenSize}
+menuText        = OnScreenText {location = (-600, 300), scale = 1.0, text = "Janky Haskell game"}
+beginState      = MenuState {buttons = [testButton], pressedKeys = [], screensize = screenSize, text = [menuText]}
 playingState    = PlayingState{player = testPlayer, pressedKeys = [], enemies = [], friendlyBullets = [], enemyBullets = [], waves = [], explosions = [], score = 0, powerUps = [], screensize = screenSize}
 
 

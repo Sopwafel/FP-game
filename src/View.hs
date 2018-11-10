@@ -18,10 +18,12 @@ view = return . viewPure
 -- | Pictures[picture1, picture2, picture3]
 -- | This itself is a Picture, so we can return it from viewPure
 viewPure :: GameState -> Picture
-viewPure MenuState {buttons = buttons}
-    = Pictures (drawThings buttons)
+viewPure MenuState {buttons = buttons, text = list}
+    = Pictures ((drawThings buttons) ++ (drawThings list))
 viewPure PlayingState {player =Player {image = img, location = (x,y) , health = health}, friendlyBullets = pBullets, enemyBullets = enemyBullets, enemies = enemies,powerUps = powerUps, explosions = explosions, score = score} 
     = Pictures ((translate x y img) : (drawScore score) : (drawThings pBullets) ++ (drawThings enemyBullets) ++ (drawThings explosions) ++ (drawThings enemies) ++ (drawThings powerUps))
+viewPure PausedState {text = list}
+    = Pictures (drawThings list)
             -- Player picture         Bullets
             -- : (drawLocation (x,y))
 
@@ -43,6 +45,8 @@ drawThings (thing:xs) = (draw thing) : (drawThings xs)
 
 
 -- || Draw Instances ##################################################################################################### | --
+instance Draw OnScreenText where
+    draw OnScreenText {location = (x, y), scale = scale, text = text} = translate x y (Scale scale scale (Text text))
 instance Draw Button where 
     draw Button {location = (x, y), size = (width, height), text = text} = translate x y (Pictures (color blue (Polygon [(0, height), (width, height), (width, -height/2), (0, -height/2)]) : [Scale 0.5 0.5 (Text text)]))
 instance Draw Bullet where

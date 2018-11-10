@@ -18,8 +18,9 @@ stepSize = 5
 
 -- | Updates the gamestate
 step :: Float -> GameState -> IO GameState
-step secs (gstate@PlayingState{}) = return (checkCollisions (updateFields (doPressedKeys gstate)))
-step secs (gstate@MenuState{})    = return (doPressedKeys gstate)
+step secs gstate@PlayingState{} = return (checkCollisions (updateFields (doPressedKeys gstate)))
+step secs gstate@MenuState{}    = return (doPressedKeys gstate)
+srep secs gstate@PausedState{}  = return (doPressedKeys gstate)
 
 updateFields :: GameState -> GameState
 updateFields gstate = updatePowerUps(updateEXPLOSIONS (updateEnemyBullets (updateEnemies (updatePlayerBullets (updateWaves gstate)))))
@@ -140,7 +141,7 @@ input e gstate = return (inputKey e gstate)
 inputKey :: Event -> GameState -> GameState
 inputKey (EventKey key keyState _ _) gstate@PlayingState{player = p, pressedKeys = list, waves = waves, powerUps = powerUps}
     | keyState == Down && key == (Char 's') =  gstate{waves = testWave : waves}     -- Spawn testwave
-    | keyState == Down && key == (Char 'p') =  gstate{powerUps = testPowerUp : powerUps}
+    | keyState == Down && key == (Char 'o') =  gstate{powerUps = testPowerUp : powerUps}
     | keyState == Down   = gstate {pressedKeys = newlist}
     | keyState == Up     = gstate {pressedKeys = filterlist}
     | otherwise = gstate
@@ -160,13 +161,16 @@ inputKey _ gstate = gstate -- Otherwise keep the same
 
 -- | Acts out all keys that are currently pressed
 doPressedKeys :: GameState -> GameState
+-- would be nice if the line below worked, but i dont understand the error so commented line it is
+-- doPressedKeys gstate {pressedKeys = keyList} = foldr keyBeingPressed gstate keyList
 doPressedKeys gstate@PlayingState{pressedKeys = keyList} = foldr keyBeingPressed gstate keyList 
 doPressedKeys gstate@MenuState{pressedKeys = keyList}    = foldr keyBeingPressed gstate keyList
+doPressedKeys gstate@PausedState{pressedKeys = keyList}  = foldr keyBeingPressed gstate keyList
 
 -- | I was thinking we could map this function over the keyPressed array
 -- | And change the gamestate for each key that's being held
 keyBeingPressed :: Key -> GameState -> GameState
-keyBeingPressed key gstate@PlayingState{player = pl@Player{location   = (x,y), size = sz}, screensize = (width, height)}
+keyBeingPressed key gstate@PlayingState{player = pl@Player{location   = (x,y), size = sz}, screensize = (width, height), pressedKeys = keys}
     | x >= (width/2 - (fromIntegral sz))   && key == (SpecialKey KeyRight) = gstate
     | x <= -(width/2 - (fromIntegral sz))  && key == (SpecialKey KeyLeft)  = gstate
     | y >= (height/2 - (fromIntegral sz))  && key == (SpecialKey KeyUp)    = gstate
@@ -176,11 +180,15 @@ keyBeingPressed key gstate@PlayingState{player = pl@Player{location   = (x,y), s
     | key == (SpecialKey KeyRight) = gstate {player = pl {location = ((x+stepSize),y)}}
     | key == (SpecialKey KeyLeft)  = gstate {player = pl {location = ((x-stepSize),y)}}
     | key == (Char 'a')            = addPlayerBullet gstate
+    | key == (Char 'p')            = PausedState {unpause = key, gameState = gstate, text = [OnScreenText{location = (-450, 400), scale = 1.0, text = "Press p to unpause"}], pressedKeys = keys}
     | otherwise = gstate
-keyBeingPressed key gstate@MenuState{buttons = buttons} = checkButton key buttons gstate
+keyBeingPressed key gstate@MenuState{buttons = buttons} = checkButtons key buttons gstate
+keyBeingPressed key gstate@PausedState{unpause = p, gameState = state}
+    | key == p  = state
+    | otherwise = gstate
 
-checkButton :: Key -> [Button] -> GameState -> GameState
-checkButton key (x@Button{key = thing, switchto = next} : xs) gstate
+checkButtons :: Key -> [Button] -> GameState -> GameState
+checkButtons key (x@Button{key = thing, switchto = next} : xs) gstate
     | key == thing = next
     | otherwise    = gstate
 
