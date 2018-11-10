@@ -20,7 +20,7 @@ stepSize = 5
 step :: Float -> GameState -> IO GameState
 step secs gstate@PlayingState{} = return (checkCollisions (updateFields (doPressedKeys gstate)))
 step secs gstate@MenuState{}    = return (doPressedKeys gstate)
-srep secs gstate@PausedState{}  = return (doPressedKeys gstate)
+step secs gstate@PausedState{}  = return (doPressedKeys gstate)
 
 updateFields :: GameState -> GameState
 updateFields gstate = updatePowerUps(updateEXPLOSIONS (updateEnemyBullets (updateEnemies (updatePlayerBullets (updateWaves gstate)))))
@@ -94,6 +94,7 @@ updateWaves :: GameState -> GameState
 updateWaves gstate@PlayingState{enemies = enemies, waves = waves, screensize = screensize} = gstate {waves = newWaves, enemies = (spawnEnemies newWaves enemies)}
     where
         newWaves = (mapMaybe (update gstate) waves)
+
         
 -- | Update the list of EXPLOSIONS!!!
 updateEXPLOSIONS :: GameState -> GameState
@@ -142,6 +143,7 @@ inputKey :: Event -> GameState -> GameState
 inputKey (EventKey key keyState _ _) gstate@PlayingState{player = p, pressedKeys = list, waves = waves, powerUps = powerUps}
     | keyState == Down && key == (Char 's') =  gstate{waves = testWave : waves}     -- Spawn testwave
     | keyState == Down && key == (Char 'o') =  gstate{powerUps = testPowerUp : powerUps}
+    | keyState == Down && key == (Char 'p') =  pausedState
     | keyState == Down   = gstate {pressedKeys = newlist}
     | keyState == Up     = gstate {pressedKeys = filterlist}
     | otherwise          = gstate
