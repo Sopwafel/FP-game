@@ -91,7 +91,7 @@ updateEnemies gstate@PlayingState{enemies = enemies, enemyBullets = enemyBullets
 
  -- | Updates spawn cooldown for waves and spawns enemies if necessary
 updateWaves :: GameState -> GameState
-updateWaves gstate@PlayingState{enemies = enemies, waves = waves, screensize = screensize} = gstate {waves = newWaves, enemies = (spawnEnemies newWaves enemies)}
+updateWaves gstate@PlayingState{enemies = enemies, waves = waves, screensize = screensize} = gstate {waves = newWaves, enemies = (spawnEnemies newWaves enemies gstate)}
     where
         newWaves = (mapMaybe (update gstate) waves)
 
@@ -110,11 +110,11 @@ scoreEnemies (Enemy{health = h, score = score}:xs)
 -- || Spawn stuff ######################################################################################################## | --
 
 -- | Puts all enemies that should be spawned by [Wave] this step in [Enemy]
-spawnEnemies :: [Wave] -> [Enemy] -> [Enemy]
-spawnEnemies [] enemies = enemies
-spawnEnemies (x:xs) enemies
-    | waveNeedsSpawn x = spawnEnemies xs ((nextEnemy x) : enemies)
-    | otherwise        = spawnEnemies xs enemies
+spawnEnemies :: [Wave] -> [Enemy] -> GameState -> [Enemy]
+spawnEnemies [] enemies gstate = enemies
+spawnEnemies (x:xs) enemies gstate
+    | waveNeedsSpawn x = spawnEnemies xs ((nextEnemy x gstate) : enemies) gstate
+    | otherwise        = spawnEnemies xs enemies gstate
 
  -- | Puts all bullets that should be spawned by [Enemy] this step in [Bullet]. Point is the location of the player
 spawnBullets :: [Enemy] -> [Bullet] -> Point -> [Bullet]

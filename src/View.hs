@@ -21,7 +21,7 @@ viewPure :: GameState -> Picture
 viewPure MenuState {buttons = buttons, text = text}
     = Pictures ((drawThings buttons) ++ (drawThings text))
 viewPure PlayingState {player =Player {image = img, location = (x,y) , health = health}, friendlyBullets = pBullets, enemyBullets = enemyBullets, enemies = enemies,powerUps = powerUps, explosions = explosions, score = score} 
-    = Pictures ((translate x y img) : (drawScore score) : (drawThings pBullets) ++ (drawThings enemyBullets) ++ (drawThings explosions) ++ (drawThings enemies) ++ (drawThings powerUps))
+    = Pictures ((translate x y img) : (drawScore score) : (drawListLength enemies) : (drawThings pBullets) ++ (drawThings enemyBullets) ++ (drawThings explosions) ++ (drawThings enemies) ++ (drawThings powerUps))
 viewPure PausedState {text = text}
     = Pictures (drawThings text)
             -- Player picture         Bullets

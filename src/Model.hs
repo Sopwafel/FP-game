@@ -52,11 +52,11 @@ instance Update Bullet where
         | outOfScreen location screensize = Nothing
         | otherwise = Just (bullet {location = (updateLocation location path), path = path} :: Bullet)   
 instance Update Enemy where
-    update  PlayingState{screensize = screensize, player = Player{location = playerLocation}} enemy@Enemy{location   = (x,y), path = StraightPath v, shotCooldownCounter = shotCooldownCounter, shotCooldown = shotCooldown, health = h}
+    update  PlayingState{screensize = screensize, player = Player{location = playerLocation}} enemy@Enemy{location   = (x,y), path = path, shotCooldownCounter = shotCooldownCounter, shotCooldown = shotCooldown, health = h}
         | outOfScreen (x,y) screensize = Nothing
         | h < 0 = Nothing
-        | shotCooldownCounter < shotCooldown = Just enemy  {location = (x+v, y), shotCooldownCounter = shotCooldownCounter +1} :: Maybe Enemy
-        | otherwise = Just enemy  {location = (x+v, y), shotCooldownCounter = 0} :: Maybe Enemy
+        | shotCooldownCounter < shotCooldown = Just enemy  {location = (updateLocation (x,y) path), shotCooldownCounter = shotCooldownCounter +1} :: Maybe Enemy
+        | otherwise = Just enemy  {location = (updateLocation (x,y) path), shotCooldownCounter = 0} :: Maybe Enemy
 instance Update Explosion where
     update  PlayingState{screensize = screensize, player = Player{location = playerLocation}} boom@Explosion{countdown = count, location = (x, y), velocity = (x2, y2)}
         | count > 0 = Just boom {countdown = count - 1, location = ((x + x2), (y + y2))}
@@ -149,7 +149,7 @@ aimBulletAtPoint point b@Bullet{location = bulletPoint, path = path} = b {path =
     --     dy   = y-yb
     --     total= (abs dx)+(abs dy)
 
--- | Aim to a point from the point of the bullet
+-- | Aim to a point from the point of the object
 aimPathAtPoint :: Point -> Point -> ObjectPath -> ObjectPath
 aimPathAtPoint (x,y) (xb,yb) (AimedPath v _) = AimedPath v ((dx / total), (dy / total))
     where
@@ -162,6 +162,7 @@ updateLocation :: Point -> ObjectPath -> Point
 updateLocation (x,y) (StraightPath f)           = (x-f,y)
 updateLocation (x,y) (AimedPath v (fx,fy))      = (x+(fx * v), y+(fy*v))
 updateLocation (x,y) (HomingPath v (fx,fy) _)   = (x+(fx * v), y+(fy*v))
+-- HomingPath doesn't really work yet, so it's the same as AimedPath for the time being.
 
 -- | Turns a homingPath slightly
 -- | xc is current x, xpl is player x, xpa is path x
@@ -181,7 +182,7 @@ updatePathHelper (AimedPath _ (ax, ay)) (HomingPath v (hx, hy) turningRate) = Ho
 -- | This works because of the DuplicateRecordFields extension
 data Bullet = Bullet {location :: Point, damagePoints :: Int, image :: Picture, path :: ObjectPath}
   
-data Enemy  = Enemy {location :: Point, health :: Int, image :: Picture, path :: ObjectPath, bullet :: Bullet, shotCooldown :: Int, shotCooldownCounter :: Int, size :: Int, score :: Int} 
+data Enemy  = Enemy {location :: Point, health :: Int, image :: Picture, path :: ObjectPath, bullet :: Bullet, shotCooldown :: Int, shotCooldownCounter :: Int, size :: Int, score :: Int, aimed :: Bool} 
       
 -- | The kinds of paths a bullet or enemy can follow
 data ObjectPath = StraightPath Float      -- Float is x speed
@@ -224,12 +225,16 @@ data Wave = Wave{pattern :: SpawnPattern, enemies :: [Enemy], interval :: Int, e
 data SpawnPattern = SpawnPattern [Float]
 
 -- | Evaluates a wave and returns the correct Enemy in the correct spot
-nextEnemy :: Wave -> Enemy
-nextEnemy Wave{enemyCounter = n, enemies = enemies, pattern = (SpawnPattern np)} = testEnemy{location = (799, (450*(np!!patternIndex)))}
+-- TODO unhardcode spawn location
+nextEnemy :: Wave -> GameState -> Enemy
+nextEnemy Wave{enemyCounter = n, enemies = enemies, pattern = (SpawnPattern np)} gstate = aimedEnemy
     where
-        enemyIndex   = (length enemies) `mod` n
+        enemyIndex   = n `mod` (length enemies)
         patternIndex = n `mod` (length np)
+        aimedEnemy = aimEnemyAtPlayer ((enemies!!enemyIndex){location = (799, (450*(np!!patternIndex)))}) gstate
        
+aimEnemyAtPlayer :: Enemy -> GameState -> Enemy
+aimEnemyAtPlayer e@Enemy{path = path, location = eloc} PlayingState{player = Player{location = ploc}} = e{path = (aimPathAtPoint eloc ploc path) } 
 waveNeedsSpawn :: Wave -> Bool
 waveNeedsSpawn Wave{interval = interval, stepCounter = stepCounter} = interval == stepCounter
 
@@ -245,9 +250,9 @@ testEnemy       = Enemy {health = 1, image = color black (ThickCircle 5.0 5.0), 
 testBullet      = Bullet {damagePoints = 1, image = Circle 2.0, path = StraightPath (-5.0)}
 testBulletAimed = Bullet {damagePoints = 1, image = Circle 2.0, path = AimedPath 5.0 (10.0,1.0)}
 testPlayer      = Player { health = 10, image = color black (ThickCircle 5.0 10.0),  location = (0.0, 0.0), bullet = testBullet, shotCooldown = 10, size = 10}
-testWave        = Wave {pattern = spawnPattern1, enemies = [testEnemy], interval = 30, enemyCounter = 1, stepCounter = 0, totalEnemies = 5}
+testWave        = Wave {pattern = spawnPattern1, enemies = [testEnemyAimed], interval = 30, enemyCounter = 1, stepCounter = 0, totalEnemies = 5}
 testExplosion   = Explosion { scale = 100.0, countdown = 300, velocity = (0.0,0.0)}
-testPowerUp     = PowerUp {location = (799.0, 0), path = StraightPath (5.0), size = 30, powerUpType = BulletSize, image = square, pickedUp = False}
+testPowerUp     = PowerUp {location = (799.0, 0), path = StraightPath (5.0), size = 50, powerUpType = BulletSize, image = square, pickedUp = False}
 testButton      = Button {location = (-225, 0), size = (550, 100), text = "Press S to play", switchto = playingState, key = Char 's'}
 menuText        = OnScreenText {location = (-600, 300), scale = 1.0, text = "Janky Haskell game"}
 beginState      = MenuState {buttons = [testButton], pressedKeys = [], screensize = screenSize, text = [menuText]}
@@ -258,3 +263,22 @@ pausedState     = PausedState{unpause = (Char 'p'), gameState = playingState, te
 squareSize = 5
 square = Polygon [(-squareSize,-squareSize),(squareSize,-squareSize),(squareSize,squareSize),(-squareSize,squareSize),(-squareSize,-squareSize)]
 
+-- || Final game objects
+-- This will be most of our randomness. Namely, what things get spawned? 
+
+testEnemyAimed  = Enemy {health = 1, image = color black (ThickCircle 5.0 5.0), path = AimedPath (-5.0) (10.0, 1.0), bullet = testBulletAimed, shotCooldown = 30, shotCooldownCounter = 0, score = 1, aimed = False}
+
+testEnemyAimedFAAST  = Enemy {health = 1, image = color black (ThickCircle 5.0 5.0), path = AimedPath (-5.0) (10.0, 1.0), bullet = testBulletAimed, shotCooldown = 30, shotCooldownCounter = 0, score = 1, aimed = False}
+testEnemy2       = Enemy {health = 1, image = color black (ThickCircle 5.0 5.0), path = StraightPath (-3.0), bullet = testBulletAimed, shotCooldown = 30, shotCooldownCounter = 0, score = 1}
+
+ezWave          = Wave {pattern = spawnPattern1, enemies = [testEnemy], interval = 30, enemyCounter = 1, stepCounter = 0, totalEnemies = 5}
+hardWave        = Wave {pattern = spawnPattern1, enemies = [testEnemyAimed], interval = 15, enemyCounter = 1, stepCounter = 0, totalEnemies = 10}
+
+bigBullet       = Bullet {damagePoints = 10, image = Circle 5.0, path = StraightPath (-2.5)}
+testBullet2      = Bullet {damagePoints = 1, image = Circle 2.0, path = StraightPath (-5.0)}
+testBulletAimed2 = Bullet {damagePoints = 1, image = Circle 2.0, path = AimedPath 5.0 (10.0,1.0)}
+
+spawnPatternn1   = SpawnPattern [-0.5, 0.0, 0.5]
+spawnPattern2   = SpawnPattern [-0.9, -0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
+spawnPattern3   = SpawnPattern [0.9,0.8,0.7]
+spawnPattern4   = SpawnPattern [0,0.33,-0.33,0.5,-0.5]
