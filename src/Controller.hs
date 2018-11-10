@@ -144,7 +144,7 @@ inputKey (EventKey key keyState _ _) gstate@PlayingState{player = p, pressedKeys
     | keyState == Down && key == (Char 'o') =  gstate{powerUps = testPowerUp : powerUps}
     | keyState == Down   = gstate {pressedKeys = newlist}
     | keyState == Up     = gstate {pressedKeys = filterlist}
-    | otherwise = gstate
+    | otherwise          = gstate
     where
         newlist    = key : list
         filterlist = filter ((/=) key) list
@@ -152,7 +152,14 @@ inputKey (EventKey key keyState _ _) gstate@PlayingState{player = p, pressedKeys
 inputKey (EventKey key keyState _ _) gstate@MenuState{pressedKeys = list}
     | keyState == Down   = gstate {pressedKeys = newlist}
     | keyState == Up     = gstate {pressedKeys = filterlist}
-    | otherwise = gstate
+    | otherwise          = gstate
+    where
+        newlist    = key : list
+        filterlist = filter ((/=) key) list
+inputKey (EventKey key keyState _ _) gstate@PausedState{pressedKeys = list}
+    | keyState == Down   = gstate {pressedKeys = newlist}
+    | keyState == Up     = gstate {pressedKeys = filterlist}
+    | otherwise          = gstate
     where
         newlist    = key : list
         filterlist = filter ((/=) key) list
@@ -180,7 +187,7 @@ keyBeingPressed key gstate@PlayingState{player = pl@Player{location   = (x,y), s
     | key == (SpecialKey KeyRight) = gstate {player = pl {location = ((x+stepSize),y)}}
     | key == (SpecialKey KeyLeft)  = gstate {player = pl {location = ((x-stepSize),y)}}
     | key == (Char 'a')            = addPlayerBullet gstate
-    | key == (Char 'p')            = PausedState {unpause = key, gameState = gstate, text = [OnScreenText{location = (-450, 400), scale = 1.0, text = "Press p to unpause"}], pressedKeys = keys}
+    | key == (Char 'p')            = pausedState
     | otherwise = gstate
 keyBeingPressed key gstate@MenuState{buttons = buttons} = checkButtons key buttons gstate
 keyBeingPressed key gstate@PausedState{unpause = p, gameState = state}

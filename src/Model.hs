@@ -18,22 +18,22 @@ data GameState = PlayingState {
                  , enemyBullets    :: [Bullet]    -- All enemy bullets. Get moved every step. TODO: check collission with player
                  , waves           :: [Wave]      -- Every step, all waves are evaluated and updated. If necessary, an enemy is spawned from them.
                  , explosions      :: [Explosion] -- All EXPLOSIONS currently in the game.
-				 , screensize      :: Point       -- Size of the widow
+                 , screensize      :: Point       -- Size of the widow
                  , score           :: Int
                  , powerUps        :: [PowerUp]
                  }
                 | MenuState {
-		           screensize  :: Point
+                   screensize  :: Point
                  , buttons     :: [Button]
-				 , pressedKeys :: [Key]
-				 , text        :: [OnScreenText]
-		         }
-				| PausedState {
-				   unpause     :: Key
-				 , gameState   :: GameState
-				 , text        :: [OnScreenText]
-				 , pressedKeys :: [Key]
-				 }
+                 , pressedKeys :: [Key]
+                 , text        :: [OnScreenText]
+                 }
+                | PausedState {
+                   unpause     :: Key
+                 , gameState   :: GameState
+                 , text        :: [OnScreenText]
+                 , pressedKeys :: [Key]
+                 }
 
 -- || Type Classes and instances ######################################################################################### | --
 -- | Returns a picture of a drawable object
@@ -252,7 +252,7 @@ testButton      = Button {location = (-225, 0), size = (550, 100), text = "Press
 menuText        = OnScreenText {location = (-600, 300), scale = 1.0, text = "Janky Haskell game"}
 beginState      = MenuState {buttons = [testButton], pressedKeys = [], screensize = screenSize, text = [menuText]}
 playingState    = PlayingState{player = testPlayer, pressedKeys = [], enemies = [], friendlyBullets = [], enemyBullets = [], waves = [], explosions = [], score = 0, powerUps = [], screensize = screenSize}
-
+pausedState     = PausedState{unpause = (Char 'p'), gameState = playingState, text = [OnScreenText{location = (-450, 400), scale = 1.0, text = "Press p to unpause"}], pressedKeys = []}
 
 -- | Pictures!
 squareSize = 5
