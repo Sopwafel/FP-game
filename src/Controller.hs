@@ -23,7 +23,7 @@ step secs gstate@MenuState{}    = return (doPressedKeys gstate)
 step secs gstate@PausedState{}  = return (doPressedKeys gstate)
 
 updateFields :: GameState -> GameState
-updateFields gstate = updatePowerUps(updateEXPLOSIONS (updateEnemyBullets (updateEnemies (updatePlayerBullets (updateWaves gstate)))))
+updateFields gstate = updatePowerUps(updateEXPLOSIONS (updateEnemyBullets (updateEnemies (updatePlayerBullets (updateWaves (spawnWaves gstate))))))
 
 -- || Collision checks ################################################################################################## | --
 -- | Checks enemy collision with player bullets and player collision with enemy bullets
@@ -90,6 +90,32 @@ updateEnemies gstate@PlayingState{enemies = enemies, enemyBullets = enemyBullets
     score = score + (scoreEnemies enemies)}
 
  -- | Updates spawn cooldown for waves and spawns enemies if necessary
+spawnWaves :: GameState -> GameState
+spawnWaves gstate@PlayingState{waves = [], rng = rng}
+    | getInt (doRNG gstate (0, 2)) == 2 = spawnWave gstate
+    | otherwise                         = gstate {rng = (getRNG (doRNG gstate (0, 2)))}
+spawnWaves gstate@PlayingState{} = gstate
+
+getRNG :: (Int, StdGen) -> StdGen
+getRNG (_, g) = g
+
+doRNG :: GameState -> (Int, Int) -> (Int, StdGen)
+doRNG gstate@PlayingState{rng = rng} x = randomR x rng
+
+spawnWave :: GameState -> GameState
+spawnWave gstate@PlayingState{waves = waves, rng = rng}
+    | x == 0    = gstate {waves = ezWave1 : waves, rng = newrng}
+    | x == 2    = gstate {waves = ezWave2 : waves, rng = newrng}
+    | x == 3    = gstate {waves = ezWave3 : waves, rng = newrng}
+    | x == 4    = gstate {waves = ezWave4 : waves, rng = newrng}
+    | x == 5    = gstate {waves = hardWave1 : waves, rng = newrng}
+    | x == 6    = gstate {waves = hardWave2 : waves, rng = newrng}
+    | x == 7    = gstate {waves = hardWave3 : waves, rng = newrng}
+    | otherwise = gstate {rng = newrng}
+    where 
+         x      = getInt (randomR (0, 7) rng)
+         newrng = getRNG (randomR (0, 7) rng)
+
 updateWaves :: GameState -> GameState
 updateWaves gstate@PlayingState{enemies = enemies, waves = waves, screensize = screensize} = gstate {waves = newWaves, enemies = (spawnEnemies newWaves enemies gstate)}
     where

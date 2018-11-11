@@ -6,6 +6,7 @@ module Model where
 
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
+import System.Random
 
 screenSize = (1600.0, 900.0)
 
@@ -21,6 +22,7 @@ data GameState = PlayingState {
                  , screensize      :: Point       -- Size of the widow
                  , score           :: Int
                  , powerUps        :: [PowerUp]
+                 , rng             :: StdGen
                  }
                 | MenuState {
                    screensize  :: Point
@@ -245,7 +247,6 @@ data OnScreenText = OnScreenText {location :: Point, scale :: Float, text :: Str
 
 -- || Objects ########################################################################################################### | --
 -- | These are actual objects with values filled in | --
-spawnPattern1   = SpawnPattern [-0.5, 0.0, 0.5]
 testEnemy       = Enemy {health = 1, image = color black (ThickCircle 5.0 5.0), path = StraightPath (-3.0), bullet = testBulletAimed, shotCooldown = 30, shotCooldownCounter = 0, score = 1}
 testBullet      = Bullet {damagePoints = 1, image = Circle 2.0, path = StraightPath (-5.0)}
 testBulletAimed = Bullet {damagePoints = 1, image = Circle 2.0, path = AimedPath 5.0 (10.0,1.0)}
@@ -256,7 +257,7 @@ testPowerUp     = PowerUp {location = (799.0, 0), path = StraightPath (5.0), siz
 testButton      = Button {location = (-225, 0), size = (550, 100), text = "Press S to play", switchto = playingState, key = Char 's'}
 menuText        = OnScreenText {location = (-600, 300), scale = 1.0, text = "Janky Haskell game"}
 beginState      = MenuState {buttons = [testButton], pressedKeys = [], screensize = screenSize, text = [menuText]}
-playingState    = PlayingState{player = testPlayer, pressedKeys = [], enemies = [], friendlyBullets = [], enemyBullets = [], waves = [], explosions = [], score = 0, powerUps = [], screensize = screenSize}
+playingState    = PlayingState{player = testPlayer, pressedKeys = [], enemies = [], friendlyBullets = [], enemyBullets = [], waves = [], explosions = [], score = 0, powerUps = [], screensize = screenSize, rng = (mkStdGen (getInt(randomR (1, 1000 :: Int) (mkStdGen 69))))}
 pausedState     = PausedState{unpause = (Char 'p'), gameState = playingState, text = [OnScreenText{location = (-450, 400), scale = 1.0, text = "Press p to unpause"}], pressedKeys = []}
 
 -- | Pictures!
@@ -271,14 +272,23 @@ testEnemyAimed  = Enemy {health = 1, image = color black (ThickCircle 5.0 5.0), 
 testEnemyAimedFAAST  = Enemy {health = 1, image = color black (ThickCircle 5.0 5.0), path = AimedPath (-5.0) (10.0, 1.0), bullet = testBulletAimed, shotCooldown = 30, shotCooldownCounter = 0, score = 1, aimed = False}
 testEnemy2       = Enemy {health = 1, image = color black (ThickCircle 5.0 5.0), path = StraightPath (-3.0), bullet = testBulletAimed, shotCooldown = 30, shotCooldownCounter = 0, score = 1}
 
-ezWave          = Wave {pattern = spawnPattern1, enemies = [testEnemy], interval = 30, enemyCounter = 1, stepCounter = 0, totalEnemies = 5}
-hardWave        = Wave {pattern = spawnPattern1, enemies = [testEnemyAimed], interval = 15, enemyCounter = 1, stepCounter = 0, totalEnemies = 10}
+ezWave1         = Wave {pattern = spawnPattern1, enemies = [testEnemy], interval = 30, enemyCounter = 1, stepCounter = 0, totalEnemies = 5}
+ezWave2         = Wave {pattern = spawnPattern2, enemies = [testEnemy], interval = 25, enemyCounter = 1, stepCounter = 0, totalEnemies = 4}
+ezWave3         = Wave {pattern = spawnPattern3, enemies = [testEnemy], interval = 35, enemyCounter = 1, stepCounter = 0, totalEnemies = 6}
+ezWave4         = Wave {pattern = spawnPattern4, enemies = [testEnemy], interval = 20, enemyCounter = 1, stepCounter = 0, totalEnemies = 3}
+hardWave1       = Wave {pattern = spawnPattern1, enemies = [testEnemyAimed], interval = 15, enemyCounter = 1, stepCounter = 0, totalEnemies = 10}
+hardWave2       = Wave {pattern = spawnPattern2, enemies = [testEnemyAimed], interval = 17, enemyCounter = 1, stepCounter = 0, totalEnemies = 15}
+hardWave3       = Wave {pattern = spawnPattern3, enemies = [testEnemyAimed], interval = 10, enemyCounter = 1, stepCounter = 0, totalEnemies = 7}
 
-bigBullet       = Bullet {damagePoints = 10, image = Circle 5.0, path = StraightPath (-2.5)}
+
+bigBullet        = Bullet {damagePoints = 10, image = Circle 5.0, path = StraightPath (-2.5)}
 testBullet2      = Bullet {damagePoints = 1, image = Circle 2.0, path = StraightPath (-5.0)}
 testBulletAimed2 = Bullet {damagePoints = 1, image = Circle 2.0, path = AimedPath 5.0 (10.0,1.0)}
 
-spawnPatternn1   = SpawnPattern [-0.5, 0.0, 0.5]
+spawnPattern1   = SpawnPattern [-0.5, 0.0, 0.5]
 spawnPattern2   = SpawnPattern [-0.9, -0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
 spawnPattern3   = SpawnPattern [0.9,0.8,0.7]
 spawnPattern4   = SpawnPattern [0,0.33,-0.33,0.5,-0.5]
+
+getInt :: (Int, StdGen) -> Int
+getInt (x, _) = x
