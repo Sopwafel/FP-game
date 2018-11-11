@@ -21,6 +21,7 @@ step :: Float -> GameState -> IO GameState
 step secs gstate@PlayingState{} = return (checkCollisions (updateFields (doPressedKeys gstate)))
 step secs gstate@MenuState{}    = return (doPressedKeys gstate)
 step secs gstate@PausedState{}  = return (doPressedKeys gstate)
+step secs gstate@DeadState{}    = return (doPressedKeys gstate)
 
 updateFields :: GameState -> GameState
 updateFields gstate = updatePowerUps(updateEXPLOSIONS (updateEnemyBullets (updateEnemies (updatePlayerBullets (updateWaves (spawnWaves gstate))))))
@@ -28,7 +29,13 @@ updateFields gstate = updatePowerUps(updateEXPLOSIONS (updateEnemyBullets (updat
 -- || Collision checks ################################################################################################## | --
 -- | Checks enemy collision with player bullets and player collision with enemy bullets
 checkCollisions :: GameState -> GameState
-checkCollisions gstate = collidePowerUpsWithPlayer (enemyCollision (playerCollision gstate))
+checkCollisions gstate = isAlive (collidePowerUpsWithPlayer (enemyCollision (playerCollision gstate)))
+
+-- | Check whether the player is still alive
+isAlive :: GameState -> GameState
+isAlive gstate@PlayingState {player = pl@Player{health = hp}}
+    | hp <= 0   = deadState
+    | otherwise = gstate
 
 -- | Check if the player gets hit by a bullet
 playerCollision :: GameState -> GameState
@@ -191,36 +198,52 @@ inputKey (EventKey key keyState _ _) gstate@PausedState{pressedKeys = list}
     where
         newlist    = key : list
         filterlist = filter ((/=) key) list
+inputKey (EventKey key keyState _ _) gstate@DeadState{pressedKeys = list}
+    | keyState == Down   = gstate {pressedKeys = newlist}
+    | keyState == Up     = gstate {pressedKeys = filterlist}
+    | otherwise          = gstate
+    where
+        newlist    = key : list
+        filterlist = filter ((/=) key) list
 inputKey _ gstate = gstate -- Otherwise keep the same
 
 
 -- | Acts out all keys that are currently pressed
 doPressedKeys :: GameState -> GameState
--- would be nice if the line below worked, but i dont understand the error so commented line it is
--- doPressedKeys gstate {pressedKeys = keyList} = foldr keyBeingPressed gstate keyList
 doPressedKeys gstate@PlayingState{pressedKeys = keyList} = foldr keyBeingPressed gstate keyList 
 doPressedKeys gstate@MenuState{pressedKeys = keyList}    = foldr keyBeingPressed gstate keyList
 doPressedKeys gstate@PausedState{pressedKeys = keyList}  = foldr keyBeingPressed gstate keyList
+doPressedKeys gstate@DeadState{pressedKeys = keyList}    = foldr keyBeingPressed gstate keyList
 
 -- | I was thinking we could map this function over the keyPressed array
 -- | And change the gamestate for each key that's being held
 keyBeingPressed :: Key -> GameState -> GameState
 keyBeingPressed key gstate@PlayingState{player = pl@Player{location   = (x,y), size = sz}, screensize = (width, height), pressedKeys = keys}
+-- | player movement
     | x >= (width/2 - (fromIntegral sz))   && key == (SpecialKey KeyRight) = gstate
     | x <= -(width/2 - (fromIntegral sz))  && key == (SpecialKey KeyLeft)  = gstate
     | y >= (height/2 - (fromIntegral sz))  && key == (SpecialKey KeyUp)    = gstate
     | y <= -(height/2 - (fromIntegral sz)) && key == (SpecialKey KeyDown)  = gstate
+-- | preventing the player from going outside of the screen
     | key == (SpecialKey KeyUp)    = gstate {player = pl {location = (x,(y+stepSize))}}
     | key == (SpecialKey KeyDown)  = gstate {player = pl {location = (x,(y-stepSize))}}
     | key == (SpecialKey KeyRight) = gstate {player = pl {location = ((x+stepSize),y)}}
     | key == (SpecialKey KeyLeft)  = gstate {player = pl {location = ((x-stepSize),y)}}
+-- | shooting
     | key == (Char 'a')            = addPlayerBullet gstate
     | otherwise = gstate
+-- | check for every button whether the key has been pressed
 keyBeingPressed key gstate@MenuState{buttons = buttons} = checkButtons key buttons gstate
+-- | unpause the game
 keyBeingPressed key gstate@PausedState{unpause = p, gameState = state}
     | key == p  = state
     | otherwise = gstate
+-- | return to menu
+keyBeingPressed key gstate@DeadState{menu = m}
+    | key == m  = beginState
+    | otherwise = gstate
 
+-- | check in a list of buttons whether one contains the key and switch to that gamestate
 checkButtons :: Key -> [Button] -> GameState -> GameState
 checkButtons key (x@Button{key = thing, switchto = next} : xs) gstate
     | key == thing = next

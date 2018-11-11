@@ -198,8 +198,6 @@ data ObjectPath = StraightPath Float      -- Float is x speed
     | HomingPath  Float Point Float       -- First Float is x speed, second y speed, third has range 0..1 and is turning rate
     | SinoidPath  Float                   -- First Float is speed, second is magnitude (a in f(x) = a*sin(x))
 
-
-
 data Player = Player { image :: Picture, location :: Point, bullet :: Bullet, shotCooldown :: Int, size :: Int, health :: Int, powerUps :: [PowerUp]}
 
 -- || PowerUps ########################################################################################################### | --
@@ -265,6 +263,7 @@ menuText        = OnScreenText {location = (-600, 300), scale = 1.0, text = "Jan
 beginState      = MenuState {buttons = [testButton], pressedKeys = [], screensize = screenSize, text = [menuText]}
 playingState    = PlayingState{player = testPlayer, pressedKeys = [], enemies = [], friendlyBullets = [], enemyBullets = [], waves = [], explosions = [], score = 0, powerUps = [], screensize = screenSize, rng = (mkStdGen (getInt(randomR (1, 1000 :: Int) (mkStdGen 69))))}
 pausedState     = PausedState{unpause = (Char 'p'), gameState = playingState, text = [OnScreenText{location = (-650, 200), scale = 1.0, text = "Press p to unpause"}], pressedKeys = []}
+deadState       = DeadState{menu = (Char 'm'), text = [OnScreenText{location = (-650, 200), scale = 0.75, text = "Press m to return to menu"}], pressedKeys = []}
 
 -- | Pictures!
 squareSize = 5
