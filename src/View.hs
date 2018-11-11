@@ -25,7 +25,7 @@ viewPure PlayingState {player =Player {image = img, location = (x,y) , health = 
 viewPure PausedState {text = text}
     = Pictures (drawThings text)
 viewPure DeadState {text = text}
-    = Pictures (drawThings text)
+    = Pictures ((drawThings text) ++ (drawHighScores [1,2,3]) : [])
             -- Player picture         Bullets
             -- : (drawLocation (x,y))
 
@@ -42,6 +42,9 @@ drawScore n = (translate (-600.0) (300.0) (Scale 0.5 0.5 (Text ("Score: " ++ (sh
 
 drawHealth :: Int -> Picture
 drawHealth n = (translate (-600.0) (200.0) (Scale 0.5 0.5 (Text ("Health: " ++ (show n)))))
+
+drawHighScores :: [Int] -> Picture
+drawHighScores list = Pictures [(translate (-200.0) (100.0) (Scale 0.5 0.5 (Text ("High Scores: ")))), (translate (-150.0) (0.0) (Scale 0.5 0.5 (Text (show list))))]
             
 -- | Turn a list of Drawable objects into a list of pictures
 drawThings :: (Draw a) => [a] -> [Picture]
