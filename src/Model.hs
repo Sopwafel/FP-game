@@ -254,7 +254,7 @@ data OnScreenText = OnScreenText {location :: Point, scale :: Float, text :: Str
 testEnemy       = Enemy {health = 1, image = color black (ThickCircle 5.0 5.0), path = StraightPath (-3.0), bullet = testBulletAimed, shotCooldown = 30, shotCooldownCounter = 0, score = 1}
 testBullet      = Bullet {damagePoints = 1, image = Circle 2.0, path = StraightPath (-5.0)}
 testBulletAimed = Bullet {damagePoints = 1, image = Circle 2.0, path = AimedPath 5.0 (10.0,1.0)}
-testPlayer      = Player { health = 10, image = color black (ThickCircle 5.0 10.0),  location = (0.0, 0.0), bullet = testBullet, shotCooldown = 10, size = 10}
+testPlayer      = Player { health = 10, image = color black (ThickCircle 5.0 10.0),  location = (0.0, 0.0), bullet = testBullet, shotCooldown = 10, size = 20}
 testWave        = Wave {pattern = spawnPattern1, enemies = [testEnemyAimed], interval = 30, enemyCounter = 1, stepCounter = 0, totalEnemies = 5}
 testExplosion   = Explosion { scale = 100.0, countdown = 300, velocity = (0.0,0.0)}
 testPowerUp     = PowerUp {location = (799.0, 0), path = StraightPath (5.0), size = 50, powerUpType = BulletSize, image = square, pickedUp = False}

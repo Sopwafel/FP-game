@@ -21,7 +21,7 @@ viewPure :: GameState -> Picture
 viewPure MenuState {buttons = buttons, text = text}
     = Pictures ((drawThings buttons) ++ (drawThings text))
 viewPure PlayingState {player =Player {image = img, location = (x,y) , health = health}, friendlyBullets = pBullets, enemyBullets = enemyBullets, enemies = enemies,powerUps = powerUps, explosions = explosions, score = score} 
-    = Pictures ((translate x y img) : (drawScore score) : (drawListLength enemies) : (drawThings pBullets) ++ (drawThings enemyBullets) ++ (drawThings explosions) ++ (drawThings enemies) ++ (drawThings powerUps))
+    = Pictures ((translate x y img) : (drawScore score) : (drawHealth health) : (drawThings pBullets) ++ (drawThings enemyBullets) ++ (drawThings explosions) ++ (drawThings enemies) ++ (drawThings powerUps))
 viewPure PausedState {text = text}
     = Pictures (drawThings text)
 viewPure DeadState {text = text}
@@ -39,6 +39,9 @@ drawLocation (x,y) = (translate (-600.0) (300.0) (Text ((show x) ++ ","++ (show 
 
 drawScore :: Int -> Picture
 drawScore n = (translate (-600.0) (300.0) (Scale 0.5 0.5 (Text ("Score: " ++ (show n)))))
+
+drawHealth :: Int -> Picture
+drawHealth n = (translate (-600.0) (200.0) (Scale 0.5 0.5 (Text ("Health: " ++ (show n)))))
             
 -- | Turn a list of Drawable objects into a list of pictures
 drawThings :: (Draw a) => [a] -> [Picture]
