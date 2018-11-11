@@ -9,6 +9,7 @@ import Model
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
 import System.Random
+import System.IO
 import Data.List
 import Data.Maybe
 
@@ -33,9 +34,30 @@ checkCollisions gstate = isAlive (collidePowerUpsWithPlayer (enemyCollision (pla
 
 -- | Check whether the player is still alive
 isAlive :: GameState -> GameState
-isAlive gstate@PlayingState {player = pl@Player{health = hp}}
-    | hp <= 0   = deadState
+isAlive gstate@PlayingState {player = pl@Player{health = hp}, score = x}
+    | hp <= 0   = deadState{score = x}
     | otherwise = gstate
+
+-- | highscore stuff the reading and writing of a file
+{-
+doesn't work, tried to fix it but got stuck.
+doHighScore :: GameState -> IO()
+doHighScore gstate = do 
+    f <- openFile "highscore.txt" ReadWriteMode
+    let x =  hGetLine f
+    return (hPutStr f (show (returnHighest (read x :: Int) (getScore gstate))))
+    hClose f
+
+getScore :: GameState -> Int
+getScore gstate@DeadState{score = x} = x
+getScore _                           = 0
+
+returnHighest :: Int -> Int -> Int
+returnHighest x y
+    | x > y     = x
+    | x < y     = y
+    | otherwise = x
+-}
 
 -- | Check if the player gets hit by a bullet
 playerCollision :: GameState -> GameState

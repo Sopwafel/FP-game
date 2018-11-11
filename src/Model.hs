@@ -37,9 +37,10 @@ data GameState = PlayingState {
                  , pressedKeys :: [Key]
                  }
                 | DeadState {
-                   menu :: Key
-                 , text :: [OnScreenText]
+                   menu        :: Key
+                 , text        :: [OnScreenText]
                  , pressedKeys :: [Key]
+                 , score       :: Int
                  }
 
 -- || Type Classes and instances ######################################################################################### | --
