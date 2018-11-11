@@ -215,7 +215,6 @@ keyBeingPressed key gstate@PlayingState{player = pl@Player{location   = (x,y), s
     | key == (SpecialKey KeyRight) = gstate {player = pl {location = ((x+stepSize),y)}}
     | key == (SpecialKey KeyLeft)  = gstate {player = pl {location = ((x-stepSize),y)}}
     | key == (Char 'a')            = addPlayerBullet gstate
-    | key == (Char 'p')            = pausedState
     | otherwise = gstate
 keyBeingPressed key gstate@MenuState{buttons = buttons} = checkButtons key buttons gstate
 keyBeingPressed key gstate@PausedState{unpause = p, gameState = state}
