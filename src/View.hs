@@ -24,19 +24,21 @@ viewPure PlayingState {player =Player {image = img, location = (x,y) , health = 
     = Pictures ((translate x y img) : (drawScore score) : (drawListLength enemies) : (drawThings pBullets) ++ (drawThings enemyBullets) ++ (drawThings explosions) ++ (drawThings enemies) ++ (drawThings powerUps))
 viewPure PausedState {text = text}
     = Pictures (drawThings text)
+viewPure DeadState {text = text}
+    = Pictures (drawThings text)
             -- Player picture         Bullets
             -- : (drawLocation (x,y))
 
 -- | Draw length of a list with circles
 drawListLength :: [a] -> Picture
 -- drawlist n [x]    = (translate (-500.0) (n-500.0) (Circle 30.0)) : []
-drawListLength ilst = (translate (-600.0) (300.0) (Text ("Length: " ++ (show (length ilst)))))
+drawListLength ilst = (translate (-600.0) (250.0) (Scale 0.25 0.25(Text ("Length: " ++ (show (length ilst))))))
 
 drawLocation :: Point -> Picture
 drawLocation (x,y) = (translate (-600.0) (300.0) (Text ((show x) ++ ","++ (show y))))
 
 drawScore :: Int -> Picture
-drawScore n = (translate (-600.0) (300.0) (Text (show n)))
+drawScore n = (translate (-600.0) (300.0) (Scale 0.5 0.5 (Text ("Score: " ++ (show n)))))
             
 -- | Turn a list of Drawable objects into a list of pictures
 drawThings :: (Draw a) => [a] -> [Picture]

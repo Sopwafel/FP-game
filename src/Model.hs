@@ -36,6 +36,11 @@ data GameState = PlayingState {
                  , text        :: [OnScreenText]
                  , pressedKeys :: [Key]
                  }
+                | DeadState {
+                   menu :: Key
+                 , text :: [OnScreenText]
+                 , pressedKeys :: [Key]
+                 }
 
 -- || Type Classes and instances ######################################################################################### | --
 -- | Returns a picture of a drawable object
@@ -158,6 +163,7 @@ aimPathAtPoint (x,y) (xb,yb) (AimedPath v _) = AimedPath v ((dx / total), (dy / 
         dx   = x-xb
         dy   = y-yb
         total= (abs dx)+(abs dy)
+aimPathAtPoint (_, _) (_, _) path = path
 
 -- | Updates an object according to its location and path
 updateLocation :: Point -> ObjectPath -> Point
@@ -258,7 +264,7 @@ testButton      = Button {location = (-225, 0), size = (550, 100), text = "Press
 menuText        = OnScreenText {location = (-600, 300), scale = 1.0, text = "Janky Haskell game"}
 beginState      = MenuState {buttons = [testButton], pressedKeys = [], screensize = screenSize, text = [menuText]}
 playingState    = PlayingState{player = testPlayer, pressedKeys = [], enemies = [], friendlyBullets = [], enemyBullets = [], waves = [], explosions = [], score = 0, powerUps = [], screensize = screenSize, rng = (mkStdGen (getInt(randomR (1, 1000 :: Int) (mkStdGen 69))))}
-pausedState     = PausedState{unpause = (Char 'p'), gameState = playingState, text = [OnScreenText{location = (-450, 400), scale = 1.0, text = "Press p to unpause"}], pressedKeys = []}
+pausedState     = PausedState{unpause = (Char 'p'), gameState = playingState, text = [OnScreenText{location = (-650, 200), scale = 1.0, text = "Press p to unpause"}], pressedKeys = []}
 
 -- | Pictures!
 squareSize = 5

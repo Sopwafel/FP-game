@@ -169,7 +169,7 @@ inputKey :: Event -> GameState -> GameState
 inputKey (EventKey key keyState _ _) gstate@PlayingState{player = p, pressedKeys = list, waves = waves, powerUps = powerUps}
     | keyState == Down && key == (Char 's') =  gstate{waves = testWave : waves}     -- Spawn testwave
     | keyState == Down && key == (Char 'o') =  gstate{powerUps = testPowerUp : powerUps}
-    | keyState == Down && key == (Char 'p') =  pausedState
+    | keyState == Down && key == (Char 'p') =  pausedState{gameState = gstate}
     | keyState == Down   = gstate {pressedKeys = newlist}
     | keyState == Up     = gstate {pressedKeys = filterlist}
     | otherwise          = gstate

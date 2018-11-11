@@ -1,8 +1,8 @@
 Things to add
 - MENUS
-	- At start of game
+	V At start of game
 	- When player dies
-	- Pause menu
+	V Pause menu
 - Paths
 	V AimedPath
 	- HomingPath
@@ -10,12 +10,12 @@ Things to add
 - Player health
 - PowerUps
 - Score
-	- Counter in screen
+	V Counter in screen
 	- HighScores in file
 - Levels
 - Instances of
 	- Enemies
-	- Waves
+	V Waves
 	- Levels
 	- PowerUps
 	- Bullets
@@ -28,7 +28,7 @@ Things to add
 Things to fix
 V Player can go out of screen
 - Caps lock breaks input
-V Make screen size not hardcoded
+- Make screen size not hardcoded
 
 -- | Aims a bullet at a point
 aimBulletAtPoint :: Point -> Bullet -> Bullet
